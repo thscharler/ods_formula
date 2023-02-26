@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/ods_formula.iml" filepath="$PROJECT_DIR$/ods_formula.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../spreadsheet-ods/spreadsheet-ods.iml" filepath="$PROJECT_DIR$/../spreadsheet-ods/spreadsheet-ods.iml" />
+    </modules>
+  </component>
+</project>
