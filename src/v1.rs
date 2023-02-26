@@ -6,7 +6,7 @@ use std::ops::{Add, BitAnd, Div, Mul, Sub};
 pub mod prelude {
     pub use super::{
         Any, FormulaWriter, Integer, Logical, Number, NumberSequence, Reference, ReferenceList,
-        Scalar, Text, ValueType,
+        Scalar, Text, Value,
     };
 }
 
@@ -14,13 +14,8 @@ pub trait FormulaWriter {
     fn formula(&self, buf: &mut dyn fmt::Write) -> fmt::Result;
 }
 
-impl<T: FormulaWriter> FormulaWriter for &T {
-    fn formula(&self, buf: &mut dyn Write) -> fmt::Result {
-        (*self).formula(buf)
-    }
-}
-
 pub trait Integer: FormulaWriter {}
+
 pub trait Number: FormulaWriter {
     fn add<T: Number>(self, other: T) -> AddOp<Self, T>
     where
@@ -28,24 +23,70 @@ pub trait Number: FormulaWriter {
     {
         AddOp { a: self, b: other }
     }
-}
-pub trait NumberSequence: FormulaWriter {}
-pub trait Text: FormulaWriter {}
-pub trait Scalar: FormulaWriter {}
-pub trait Logical: FormulaWriter {}
-pub trait Reference: FormulaWriter {}
-pub trait ReferenceList: FormulaWriter {}
-pub trait Any: FormulaWriter {}
 
-impl<T: Integer> Integer for &T {}
-impl<T: Number> Number for &T {}
-impl<T: NumberSequence> NumberSequence for &T {}
-impl<T: Text> Text for &T {}
-impl<T: Scalar> Scalar for &T {}
-impl<T: Logical> Logical for &T {}
-impl<T: Reference> Reference for &T {}
-impl<T: ReferenceList> ReferenceList for &T {}
-impl<T: Any> Any for &T {}
+    fn sub<T: Number>(self, other: T) -> SubOp<Self, T>
+    where
+        Self: Sized,
+    {
+        SubOp { a: self, b: other }
+    }
+
+    fn mul<T: Number>(self, other: T) -> MulOp<Self, T>
+    where
+        Self: Sized,
+    {
+        MulOp { a: self, b: other }
+    }
+
+    fn div<T: Number>(self, other: T) -> DivOp<Self, T>
+    where
+        Self: Sized,
+    {
+        DivOp { a: self, b: other }
+    }
+}
+
+pub trait NumberSequence: FormulaWriter {}
+
+pub trait Text: FormulaWriter {
+    fn append<T: Text>(self, other: T) -> TextConcat<Self, T>
+    where
+        Self: Sized,
+    {
+        TextConcat { a: self, b: other }
+    }
+}
+
+pub trait Scalar: FormulaWriter {}
+
+pub trait Logical: FormulaWriter {
+    fn eq<T: Logical>(self, other: T) -> EqOp<Self, T>
+    where
+        Self: Sized,
+    {
+        EqOp { a: self, b: other }
+    }
+}
+
+pub trait Reference: FormulaWriter {}
+
+pub trait ReferenceList: FormulaWriter {
+    fn intersect<T: ReferenceList>(self, other: T) -> IntersectOp<Self, T>
+    where
+        Self: Sized,
+    {
+        IntersectOp { a: self, b: other }
+    }
+
+    fn concat<T: ReferenceList>(self, other: T) -> ConcatOp<Self, T>
+    where
+        Self: Sized,
+    {
+        ConcatOp { a: self, b: other }
+    }
+}
+
+pub trait Any: FormulaWriter {}
 
 /// formula
 pub fn formula<T: FormulaWriter>(f: T) -> Result<String, fmt::Error> {
@@ -55,42 +96,42 @@ pub fn formula<T: FormulaWriter>(f: T) -> Result<String, fmt::Error> {
     Ok(buf)
 }
 
-pub trait ValueType
+pub trait Value
 where
     Self: Sized,
 {
-    fn val(self) -> Value<Self>;
+    fn val(self) -> ValueFn<Self>;
 }
 
-impl<A: FormulaWriter> ValueType for A {
-    fn val(self) -> Value<A> {
-        Value { a: self }
+impl<A: FormulaWriter> Value for A {
+    fn val(self) -> ValueFn<A> {
+        ValueFn { a: self }
     }
 }
 
-pub struct Value<A> {
+pub struct ValueFn<A> {
     a: A,
 }
 
-impl<A: FormulaWriter> FormulaWriter for Value<A> {
+impl<A: FormulaWriter> FormulaWriter for ValueFn<A> {
     fn formula(&self, buf: &mut dyn Write) -> fmt::Result {
         self.a.formula(buf)?;
         Ok(())
     }
 }
 
-impl<A: Any> Any for Value<A> {}
-impl<A: ReferenceList> ReferenceList for Value<A> {}
-impl<A: Reference> Reference for Value<A> {}
-impl<A: Logical> Logical for Value<A> {}
-impl<A: Scalar> Scalar for Value<A> {}
-impl<A: Text> Text for Value<A> {}
-impl<A: NumberSequence> NumberSequence for Value<A> {}
-impl<A: Number> Number for Value<A> {}
-impl<A: Integer> Integer for Value<A> {}
+impl<A: Any> Any for ValueFn<A> {}
+impl<A: ReferenceList> ReferenceList for ValueFn<A> {}
+impl<A: Reference> Reference for ValueFn<A> {}
+impl<A: Logical> Logical for ValueFn<A> {}
+impl<A: Scalar> Scalar for ValueFn<A> {}
+impl<A: Text> Text for ValueFn<A> {}
+impl<A: NumberSequence> NumberSequence for ValueFn<A> {}
+impl<A: Number> Number for ValueFn<A> {}
+impl<A: Integer> Integer for ValueFn<A> {}
 
-pub fn val<A>(a: A) -> Value<A> {
-    Value { a }
+pub fn val<A>(a: A) -> ValueFn<A> {
+    ValueFn { a }
 }
 
 // -----------------------------------------------------------------------
@@ -112,15 +153,14 @@ impl<A: FormulaWriter> FormulaWriter for Parentheses<A> {
     }
 }
 
-impl<A: Any> Any for Parentheses<A> {}
-impl<A: ReferenceList> ReferenceList for Parentheses<A> {}
-impl<A: Reference> Reference for Parentheses<A> {}
-impl<A: Logical> Logical for Parentheses<A> {}
-impl<A: Scalar> Scalar for Parentheses<A> {}
-impl<A: Text> Text for Parentheses<A> {}
-impl<A: NumberSequence> NumberSequence for Parentheses<A> {}
-impl<A: Number> Number for Parentheses<A> {}
 impl<A: Integer> Integer for Parentheses<A> {}
+impl<A: Number> Number for Parentheses<A> {}
+impl<A: NumberSequence> NumberSequence for Parentheses<A> {}
+impl<A: Text> Text for Parentheses<A> {}
+impl<A: Logical> Logical for Parentheses<A> {}
+impl<A: Reference> Reference for Parentheses<A> {}
+impl<A: ReferenceList> ReferenceList for Parentheses<A> {}
+impl<A: Any> Any for Parentheses<A> {}
 
 pub fn par<A>(a: A) -> Parentheses<A> {
     Parentheses { a }
@@ -134,19 +174,30 @@ impl FormulaWriter for CellRef {
         write!(buf, "{}", self.to_formula())
     }
 }
+impl Integer for CellRef {}
+impl Number for CellRef {}
+impl NumberSequence for CellRef {}
+impl Text for CellRef {}
+impl Logical for CellRef {}
 impl Reference for CellRef {}
 impl ReferenceList for CellRef {}
+impl Any for CellRef {}
 
 impl FormulaWriter for CellRange {
     fn formula(&self, buf: &mut dyn Write) -> fmt::Result {
         write!(buf, "{}", self.to_formula())
     }
 }
+impl Integer for CellRange {}
+impl Number for CellRange {}
+impl NumberSequence for CellRange {}
+impl Text for CellRange {}
+impl Logical for CellRange {}
 impl Reference for CellRange {}
 impl ReferenceList for CellRange {}
-impl NumberSequence for CellRange {}
+impl Any for CellRange {}
 
-impl<T: Reference, const N: usize> FormulaWriter for [T; N] {
+impl<T: FormulaWriter, const N: usize> FormulaWriter for [T; N] {
     fn formula(&self, buf: &mut dyn Write) -> fmt::Result {
         for (i, r) in self.iter().enumerate() {
             if i > 0 {
@@ -157,6 +208,7 @@ impl<T: Reference, const N: usize> FormulaWriter for [T; N] {
         Ok(())
     }
 }
+impl<T: NumberSequence, const N: usize> NumberSequence for [T; N] {}
 
 macro_rules! value_int {
     ($t:ty) => {
@@ -168,7 +220,6 @@ macro_rules! value_int {
 
         impl Integer for $t {}
         impl Number for $t {}
-        impl Scalar for $t {}
         impl Logical for $t {}
         impl Any for $t {}
     };
@@ -182,7 +233,6 @@ macro_rules! value_number {
         }
 
         impl Number for $t {}
-        impl Scalar for $t {}
         impl Logical for $t {}
         impl Any for $t {}
     };
@@ -367,14 +417,6 @@ impl<A: FormulaWriter, B: FormulaWriter> FormulaWriter for TextConcat<A, B> {
 impl<A: FormulaWriter, B: FormulaWriter> Text for TextConcat<A, B> {}
 impl<A: FormulaWriter, B: FormulaWriter> Any for TextConcat<A, B> {}
 
-impl<'a> BitAnd<&'a dyn Text> for &'a dyn Text {
-    type Output = TextConcat<&'a dyn Text, &'a dyn Text>;
-
-    fn bitand(self, rhs: &'a dyn Text) -> Self::Output {
-        TextConcat { a: self, b: rhs }
-    }
-}
-
 pub fn txt_concat<A: Text, B: Text>(a: A, b: B) -> TextConcat<A, B> {
     TextConcat { a, b }
 }
@@ -399,7 +441,7 @@ impl<A: FormulaWriter, B: FormulaWriter> FormulaWriter for IntersectOp<A, B> {
 impl<A: FormulaWriter, B: FormulaWriter> ReferenceList for IntersectOp<A, B> {}
 impl<A: FormulaWriter, B: FormulaWriter> Any for IntersectOp<A, B> {}
 
-pub fn intersect<A: Reference, B: Reference>(a: A, b: B) -> IntersectOp<A, B> {
+pub fn intersect<A: ReferenceList, B: ReferenceList>(a: A, b: B) -> IntersectOp<A, B> {
     IntersectOp { a, b }
 }
 
@@ -420,7 +462,7 @@ impl<A: FormulaWriter, B: FormulaWriter> FormulaWriter for ConcatOp<A, B> {
 impl<A: FormulaWriter, B: FormulaWriter> ReferenceList for ConcatOp<A, B> {}
 impl<A: FormulaWriter, B: FormulaWriter> Any for ConcatOp<A, B> {}
 
-pub fn concat<A: Reference, B: Reference>(a: A, b: B) -> ConcatOp<A, B> {
+pub fn concat<A: ReferenceList, B: ReferenceList>(a: A, b: B) -> ConcatOp<A, B> {
     ConcatOp { a, b }
 }
 
