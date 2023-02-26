@@ -1,0 +1,54 @@
+#[cfg(test)]
+mod tests {
+    use crate as of;
+    use crate::Formula;
+    use crate::Value;
+    use spreadsheet_ods::CellRef;
+
+    #[test]
+    fn test0() {
+        let mut buf = String::new();
+        let _ = of::formula(of::sum((1, 2, 3)));
+        println!("{}", buf);
+
+        buf = String::new();
+        let _ = of::formula(of::sum(("1", of::par(of::val(&1) + of::val(&"X")), "X")));
+        println!("{}", buf);
+
+        buf = String::new();
+        let _ = of::sum(("1", of::par(of::val(&1) + &"X"), "X"));
+        println!("{}", buf);
+
+        buf = String::new();
+        let _ = of::sum(("1", (of::val(&1) + of::val(&"X"),), "X"));
+        println!("{}", buf);
+
+        buf = String::new();
+        let _ = of::sum(("1", of::val(&1) + &"X", "X"));
+        println!("{}", buf);
+
+        buf = String::new();
+        let _ = of::sum(("1", of::par(of::val(&1) + &"X"), "X")).formula(&mut buf);
+        println!("{}", buf);
+
+        buf = String::new();
+        let _ = of::sum(("1", (of::val(&1) + of::val(&"X"),), "X")).formula(&mut buf);
+        println!("{}", buf);
+
+        buf = String::new();
+        let _ = of::sum(("1", of::val(&1) + &"X", "X")).formula(&mut buf);
+        println!("{}", buf);
+
+        buf = String::new();
+        let _ = ("1").formula(&mut buf);
+        println!("{}", buf);
+
+        buf = String::new();
+        let _ = of::par("1").formula(&mut buf);
+        println!("{}", buf);
+
+        buf = String::new();
+        let _ = (CellRef::local(5, 4).val() + of::val(&5)).formula(&mut buf);
+        println!("{}", buf);
+    }
+}
