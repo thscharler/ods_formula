@@ -1,54 +1,367 @@
-#[cfg(test)]
-mod tests {
-    use crate as of;
-    use crate::Formula;
-    use crate::Value;
-    use spreadsheet_ods::CellRef;
+4 Types
+4.1 General
+All values defined by OpenFormula have a type. OpenFormula defines Text 4.2,
+Number 4.3,
+Complex Number 4.4, Logical 4.5, Error 4.6, Reference 4.8, ReferenceList 4.9 and
+Array 4.10
+types.
 
-    #[test]
-    fn test0() {
-        let mut buf = String::new();
-        let _ = of::formula(of::sum((1, 2, 3)));
-        println!("{}", buf);
+4.2 Text (String)
+A Text value (also called a string value) is a Character string as specified
+in [CharModel].
+A text value of length zero is termed the empty string.
+Index positions in a text value begin at 1.
+Whether or not Unicode Normalization [UTR15] is performed on formulas, formula
+results or user
+inputs is implementation-defined. Some functions defined in OpenFormula are
+labeled as
+"normalization-sensitive", meaning that the results of the formula evaluation
+may differ depending
+on whether normalization occurs, and which normalization form is used. Mixing
+operands of
+different normalization forms in the same calculation is undefined.
 
-        buf = String::new();
-        let _ = of::formula(of::sum(("1", of::par(of::val(&1) + of::val(&"X")), "X")));
-        println!("{}", buf);
+4.3 Number
+4.3.1 General
+A number is a numeric value.
+Numbers shall be able to represent fractional values (they shall not be limited
+to only integers).
+Evaluators may implement Number with a fixed or with a variable bit length. A
+cell with a constant
+numeric value has the Number type.
+Implementations typically support many subtypes of Number, including Date, Time,
+DateTime,
+Percentage, fixed-point arithmetic, and arithmetic supporting arbitrarily long
+integers, and
+determine the display format from this. All such Number subtypes shall yield
+TRUE for the
+ISNUMBER 6.13.22 function.
+Note: This specification does not require that specific subtypes be
+distinguishable
+from each other, or that the subtype be tracked, but in practice most
+implementations do such tracking because requiring users to manually format
+every cell appropriately becomes tedious very quickly. Automatically determining
+the most likely subtype is especially important for a good user interface when
+generating OpenDocument format, since some subtypes (such as date, time, and
+currency) are stored in a different manner depending on their subtype. Thus,
+this
+specification identifies some common subtypes and identifies those subtypes
+where relevant in some function definitions, as an aid to implementing good user
+interfaces. Many applications vary in the subtype produced when combining
+subtypes (e.g., what is the result when percentages are multiplied together), so
+unless otherwise noted these are unspecified. Typical implementations try to
+heuristically determine the "right" format for a cell when a formula is first
+created,
+based on the operations in the formula. Users can then override this format, so
+as
+a result the heuristics are not important for data exchange (and thus outside
+the
+scope of this specification).
+All Number subtypes shall yield TRUE for the ISNUMBER function.
 
-        buf = String::new();
-        let _ = of::sum(("1", of::par(of::val(&1) + &"X"), "X"));
-        println!("{}", buf);
+4.3.2 Time
+Time is a subtype of Number.
+Time is represented as a fraction of a day.
 
-        buf = String::new();
-        let _ = of::sum(("1", (of::val(&1) + of::val(&"X"),), "X"));
-        println!("{}", buf);
+4.3.3 Date
+Date is a subtype of Number.
+Date is represented by an integer value.
+A serial date is the expression of a date as the number of days elapsed from a
+start date called
+the epoch.
+Evaluators shall support all dates from 1904-01-01 through 9999-12-31 (
+inclusive) in calculations,
+should support dates from 1899-12-30 through 9999-12-31 (inclusive) and may
+support a wider
+date range.
+Note 1: Using expressions that assume serial numbers are based on a particular
+epoch may cause interoperability issues.
+Evaluators shall support positive serial numbers. Evaluators may support
+negative serial numbers
+to represent dates before an epoch.
+Note 2: It is implementation-defined if the year 1900 is treated as a leap year.
+Note 3: Evaluators that treat 1900 as a non-leap year can use the epoch date
+1899-12-30 to compensate for serial numbers that originate from evaluators that
+treat 1900 as a leap year and use 1899-12-31 as an epoch date.
 
-        buf = String::new();
-        let _ = of::sum(("1", of::val(&1) + &"X", "X"));
-        println!("{}", buf);
+4.3.4 DateTime
+DateTime is a subtype of Number. It is a Date plus Time.
 
-        buf = String::new();
-        let _ = of::sum(("1", of::par(of::val(&1) + &"X"), "X")).formula(&mut buf);
-        println!("{}", buf);
+4.3.5 Percentage
+A percentage is a subtype of Number that may be displayed by multiplying the
+number by 100 and
+adding the sign “%” or with other formatting depending upon the number format
+assigned to the
+cell where it appears.
 
-        buf = String::new();
-        let _ = of::sum(("1", (of::val(&1) + of::val(&"X"),), "X")).formula(&mut buf);
-        println!("{}", buf);
+4.3.6 Currency
+A currency is a subtype of Number that may appear with or without a currency
+symbol or with
+other formatting depending upon the number format assigned to the cell where it
+appears.
 
-        buf = String::new();
-        let _ = of::sum(("1", of::val(&1) + &"X", "X")).formula(&mut buf);
-        println!("{}", buf);
+4.3.7 Logical (Number)
+Applications may have a Logical type distinct from both Number and Text (see 4.5
+Logical (Boolean)), but Logical values may also be represented by the Number
+type using the values 1 (True)
+and 0 (False). (see 8.2 Distinct Logical for details)
 
-        buf = String::new();
-        let _ = ("1").formula(&mut buf);
-        println!("{}", buf);
+4.4 Complex Number
+A complex number (sometimes also called an imaginary number) is a pair of real
+numbers
+including a real part and an imaginary part. In mathematics, complex numbers are
+often written as
+x + iy, where x (the real part) and y (the imaginary part) are real numbers and
+i is −1 . A
+complex number can also be written as reiθ = rcos(θ) + irsin(θ), where r is the
+modulus of the
+complex number (a real number) and θ is the argument or phase (a real number
+representing an
+angle in radians).
+A complex number may, but need not be, represented as a Number or
+Text. The results of the
+functions ISNUMBER() 6.13.22 and ISTEXT() 6.13.25 are implementation-defined
+when applied to
+a complex number.
+Functions and operators that accept complex numbers shall accept Text values as
+complex
+numbers (Conversion to Complex Number 6.3.10), as well as Numbers that are not
+complex
+numbers.
+Note 1: IMSUM("3i";4) will produce the same result as COMPLEX(4;3).
+Note 2: Expression authors should be aware that use of functions that are not
+defined by OpenFormula as accepting complex numbers as input may impair
+interoperability.
+Equality can be tested using IMSUB to compute the difference, use IMABS to find
+the absolute
+difference, and then ensure the absolute difference is smaller than or equal to
+some nonnegative
+value (for exact equality, compare for equality with 0).
 
-        buf = String::new();
-        let _ = of::par("1").formula(&mut buf);
-        println!("{}", buf);
+4.5 Logical (Boolean)
+Applications may have a Logical type distinct from both Number and Text, but
+Logical values may
+also be represented by the Number type using the values 1 (True) and 0 (False) (
+see 4.3.7
+Logical (Number)). (see 8.2 Distinct Logical for details)
 
-        buf = String::new();
-        let _ = (CellRef::local(5, 4).val() + of::val(&5)).formula(&mut buf);
-        println!("{}", buf);
-    }
-}
+4.6 Error
+An Error is one of a set of possible error values. Implementations may have many
+different error
+values (see 5.12), but one error value in particular is distinct: #N/A, the
+result of the NA() function.
+Users may choose to enter some data values as #N/A, so that this error value
+propagates to any
+other formula that uses it, and may test for this using the function ISNA().
+Functions and operators that receive one or more error values as an input shall
+produce one of
+those input error values as their result, except when the formula or operator is
+specifically defined
+to do otherwise.
+In an OpenDocument document, if an error value is the result of a cell
+computation it shall be
+stored as if it was a string. That is, the office:value-type (OpenDocument Part
+3, 19.389) of
+an error value is string; if the computed value is stored, it is stored in the
+attribute
+office:string-value (OpenDocument Part 3, 19.383).
+Note: This does not change an Error into a string type (since the Error will be
+restored on
+recalculation); this enables applications which cannot recalculate values to
+display the error
+information.
+
+4.7 Empty Cell
+An empty cell is neither zero nor the empty string, and an empty cell can be
+distinguished from
+cells containing values (including zero and the empty string). An empty cell is
+not the same as an
+Error, in particular, it is distinguishable from the Error #N/A (not available).
+
+4.8 Reference
+A cell position is the location of a single cell at the intersection of a column
+and a row.
+A cell strip consists of cell positions in the same row and in one or more
+contiguous columns.
+A cell rectangle consists of cell positions in the same cell strips of one or
+more contiguous rows.
+A cell cuboid consists of cell positions in the same cell rectangles of one or
+more contiguous
+sheets.
+A reference is the smallest cuboid that (1) contains
+specifically-identified cell positions and/or
+specifically-identified complete columns/rows such that (2) removal of any cell
+positions either
+violates condition (1) or does not leave a cuboid.
+Cell positions in a cell cuboid/rectangle/strip can resolve to empty cells (
+section 4.7).
+The definitions of specific operations and functions that allow references as
+operands and
+parameters stipulate any particular limitations there are on forms of references
+and how empty
+cells, when permitted, are interpreted.
+
+4.9 ReferenceList
+A reference list contains 1 or more references, in order. A reference list can
+be passed as an
+argument to functions where passing one reference results in an identical
+computation as an
+arbitrary sequence of single references occupying the identical cell range.
+Note 1: For example, SUM([.A1:.B2]) is identical to
+SUM([.A1]~[.B2]~[.A2]~[.B1]),
+but COLUMNS([.A1:.B2]), resulting in 2 columns, is not identical to
+COLUMNS([.A1]~[.B2]~[.A2]~[.B1]), where iterating over the reference list would
+result in 4 columns.
+A reference list cannot be converted to an array.
+Note 2: For example, in array context {ABS([.A1]~[.B2]~[.A2]~[.B1])} is an
+invalid
+expression, whereas {ABS([.A1:.B2])} is not.
+Passing a reference list where a function does not expect one shall generate an
+Error. Passing a
+reference list in array iteration context to a function expecting a scalar value
+shall generate an
+Error.
+
+4.10 Array
+An array is a set of rows each with the same number of columns that contain one
+or more values.
+There is a maximum of one value per intersection of row and column. The
+intersection of a row
+and column may contain no value.
+
+4.11 Pseudotypes
+
+4.11.1 General
+Many functions require a type or a set of types with special properties, and/or
+process them
+specially. For example, a "Database" requires headers that are the field names.
+These specialized
+types are called pseudotypes.
+
+4.11.2 Scalar
+A Scalar value is a value that has a single value. A reference to more than one
+cell is not a scalar
+(by itself), and is converted to one as described below. An array with more than
+one element is
+not a scalar. The types Number (including a complex number), Logical, and Text
+are scalars.
+
+4.11.3 DateParam
+A DateParam is a value that is either a Number (interpreted as a serial number;
+4.3.3) or Text;
+text is automatically converted to a date value. 6.3.15
+
+4.11.4 TimeParam
+A TimeParam is a value that is either a Number (interpreted as a serial number;
+4.3.2) or Text;
+text is automatically converted to a time value (fraction of a day). 6.3.16
+
+4.11.5 Integer
+An integer is a subtype of Number that has no fractional value. An integer X is
+equal to INT(X).
+Division of one integer by another integer may produce a non-integer.
+
+4.11.6 TextOrNumber
+TextOrNumber is a value that is either a Number or Text.
+
+4.11.8 Criterion
+A criterion is a single cell Reference, Number or Text. It is used in
+comparisons with cell contents.
+A reference to an empty cell is interpreted as the numeric value 0.
+A matching expression can be:
+• A Number or Logical value. A matching cell content equals the Number or
+Logical value.
+• A value beginning with a comparator (<, <=, >, >=) 6.4.9 or an infix
+operator (=, <>). = 6.4.7,
+<> 6.4.8
+For =, if the value is empty it matches empty cells. Empty cell 4.7, = 6.4.7
+For <>, if the value is empty it matches non-empty cells. <> 6.4.8
+For <>, if the value is not empty it matches any cell content except the value,
+including empty
+cells.
+Note: "=0" does not match empty cells.
+For = and <>, if the value is not empty and can not be interpreted as a Number
+type or one of
+its subtypes and the host-defined property
+HOST-SEARCH-CRITERIA-MUST-APPLY-TOWHOLE-CELL is true, comparison is against the
+entire cell contents, if false, comparison is
+against any subpart of the field that matches the criteria. For = and <>, if the
+value is not
+empty and can not be interpreted as a Number type or one of its subtypes 3.4
+applies.
+• Other Text value. If the host-defined property
+HOST-SEARCH-CRITERIA-MUST-APPLY-TOWHOLE-CELL is true, the comparison is against
+the entire cell contents, if false, comparison
+is against any subpart of the field that matches the criteria.
+
+4.11.9 Database
+A database is a rectangular organized set of data. Any database has a set of one
+or more fields
+that determine the structure of the database. A database has a set of zero or
+more records with
+data, and each record contains data for every field (though that field may be
+empty).
+Evaluators shall support the use of ranges as databases if they support any
+database functions.
+The first row of a range is interpreted as a set of field names.
+Note: Field names of type Text and unique without regard to case enhance the
+interoperability of data. It is also a common expectation that rows following
+the
+first row of data are data records that correspond to field names in the first
+row.
+A single cell containing text can be used as a database; if it is, it is a
+database with a single field
+and no data records.
+
+4.11.10 Field
+A field is a value that selects a field in a database; it is also called a field
+selector. If the field
+selector is Text, it selects the field in the database with the same name.
+Evaluators should match the database field name case-insensitively.
+If a field selector is a Number, it is a positive integer and used to select the
+fields. Fields are
+numbered from left to right beginning with the number 1.
+All functions that accept a field parameter shall, when evaluated, return an
+Error if the selected
+field does not exist.
+
+4.11.11 Criteria
+A criteria is a rectangular set of values, with at least one column and two
+rows, that selects
+matching records from a database. The first row lists fields against which
+expressions will be
+matched. 4.11.10 Rows after the first row contain fields with
+expressions for matching against
+database records.
+For a record to be selected from a database, all of the expressions in a
+criteria row shall match.
+A reference to an empty cell is interpreted as the numeric value 0.
+• Expressions are matched as per 4.11.8 Criterion.
+
+4.11.12 Sequences (NumberSequence, NumberSequenceList,
+DateSequence, LogicalSequence, and ComplexSequence)
+Some functions accept a sequence, i.e., a value that is to be treated as a
+sequential series of
+values. The following are sequences: NumberSequence, NumberSequenceList,
+DateSequence,
+LogicalSequence, and ComplexSequence.
+When evaluating a function that accepts a sequence, the evaluator shall follow
+the rules for that
+sequence as defined in section 6.3. When processing a ReferenceList, the
+references are
+processed in order (first, second if any, and so on). In a cuboid, the first
+sheet is first processed,
+followed by later sheets (if any) in order. Inside a sheet, it is
+implementation-defined as to whether
+the values are processed row-at-a-time or column-at-a-time, but it shall be one
+of these two
+processing orders. If processing row-at-a-time, the sequence shall be produced
+by processing
+each row in turn, from smallest to largest column value (e.g., A1, B1, C1). If
+processing column-ata-time, the sequence shall be produced by processing each
+column at a time, from the smallest to
+the largest row value (e.g., A1, A2, A3).
+
+4.11.13 Any
+Any represents a value of any type defined in this standard, including Error
+values

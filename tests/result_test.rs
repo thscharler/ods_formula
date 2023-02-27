@@ -1,5 +1,5 @@
 use std::fmt;
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
 
 pub trait Report<Q> {
     fn report(self, q: Q);
@@ -23,16 +23,16 @@ pub struct ReportValues;
 
 impl<O, E> Report<ResultTest<O, E>> for ReportValues
 where
-    O: Debug,
-    E: Debug,
+    O: Display,
+    E: Display,
 {
     fn report(self, q: ResultTest<O, E>) {
         match (q.ok.as_ref(), q.err.as_ref()) {
             (Some(ok), None) => {
-                println!("{:?}", ok);
+                println!("{}", ok);
             }
             (None, Some(err)) => {
-                println!("{:?}", err);
+                println!("{}", err);
             }
             _ => unreachable!(),
         }

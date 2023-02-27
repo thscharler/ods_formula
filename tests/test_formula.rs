@@ -12,15 +12,22 @@ fn test_val() {
     let v = 35u32;
     let v0: &dyn Number = &v;
 
-    let v = 35u32.val();
+    let v = 35u32;
     let v0: &dyn Number = &v;
     let v0: &dyn Integer = &v;
     let v0: &dyn Any = &v;
 
-    let v = of::val(35u32);
+    let v = 35u32;
     let v0: &dyn Number = &v;
     let v0: &dyn Integer = &v;
     let v0: &dyn Any = &v;
+}
+
+#[test]
+fn test_str() {
+    test(of::formula("boing")).q(Q);
+    test(of::formula("zack".append("crack"))).q(Q);
+    test(of::formula("zack".append(CellRef::local(5, 5)))).q(Q);
 }
 
 #[test]
@@ -37,7 +44,7 @@ fn test_add() {
 fn test1() {
     test(of::formula(35)).q(Q);
     test(of::formula("35")).q(Q);
-    test(of::formula(35i64.val())).q(Q);
+    test(of::formula(35i64)).q(Q);
 
     test(of::formula(35.add(17))).q(Q);
     test(of::formula(of::par(35.add(17)))).q(Q);
