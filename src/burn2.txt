@@ -1,0 +1,59 @@
+**************************************************************************
+Formula trait dependency graph
+**************************************************************************
+
+--------------------------------------------------------------------------
+    auto .. auto implements these
+    manual .. when implementing also implement these
+    with .. comes with the implementation of these
+    * .. brings in a bunch of auto's
+    - .. when implementing the before mentioned trait you
+         don't need these
+--------------------------------------------------------------------------
+
+// Always implement
+Any
+
+// At your discretion
+Number
+                    manual
+                        Number
+                        Logical
+                        TextOrNumber
+                    with
+                        Reference
+
+Text
+                    manual
+                        Text
+                        TextOrNumber
+                    with
+                        Reference
+
+Logical
+                    manual
+                        Logical
+                        Number
+                    with
+                        Number
+                        Reference
+
+Reference
+                    manual
+                        Reference
+                        Number
+                        Text
+                        Logical
+                        TextOrNumber
+
+Criterion
+                    manual
+                        Criterion
+
+TextOrNumber
+                    with
+                        Text
+                        Number
+                        Reference
+
+

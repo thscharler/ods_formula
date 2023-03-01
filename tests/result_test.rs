@@ -142,3 +142,9 @@ impl<E> ResultTest<String, E> {
 pub fn test(r: Result<String, fmt::Error>) -> ResultTest<String, fmt::Error> {
     ResultTest::new(r)
 }
+
+#[allow(dead_code)]
+#[must_use]
+pub fn nest(r: String) -> ResultTest<String, fmt::Error> {
+    ResultTest::new(Ok(r))
+}
