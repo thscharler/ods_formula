@@ -9,15 +9,19 @@ pub mod date;
 pub mod extaccess;
 pub mod matrix;
 
+/// The traits for this crate.
+/// And the function p() for parentheses.
 pub mod prelude {
     pub use super::parentheses as p;
     pub use super::{Any, Criterion, Logical, Number, Reference, Text};
-    pub use super::{CriterionOp, LogicalOp, NumberOp, ReferenceOp, TextOp};
+    pub use super::{LogicalOp, NumberOp, ReferenceOp, TextOp};
 }
 
+/// Base trait for output to a String.
 pub trait Any {
     fn formula(&self, buf: &mut String);
 }
+/// A number-like parameter. This is also used for date, time etc.
 pub trait Number: Any {
     fn n(&self) -> FNumber {
         let mut buf = String::new();
@@ -25,6 +29,7 @@ pub trait Number: Any {
         FNumber(buf)
     }
 }
+/// A text-like parameter.
 pub trait Text: Any {
     fn t(&self) -> FText {
         let mut buf = String::new();
@@ -32,6 +37,7 @@ pub trait Text: Any {
         FText(buf)
     }
 }
+/// A logical parameter.
 pub trait Logical: Any {
     fn b(&self) -> FLogical {
         let mut buf = String::new();
@@ -39,6 +45,7 @@ pub trait Logical: Any {
         FLogical(buf)
     }
 }
+/// A reference-like parameter.
 pub trait Reference: Any {
     fn r(&self) -> FReference {
         let mut buf = String::new();
@@ -46,40 +53,99 @@ pub trait Reference: Any {
         FReference(buf)
     }
 }
+/// A matrix or array as parameter.
 pub trait Matrix: Any {}
+/// A filter/search criterion
 pub trait Criterion: Any {}
+/// A sequence of values.
 pub trait Sequence: Any {}
+/// Text or a number.
 pub trait TextOrNumber: Any {}
+/// Field denominator for a database.
 pub trait Field: Any {}
+/// A date or time-like parameter.
 pub trait DateTimeParam: Any {}
 
-pub use Sequence as Database;
-pub use Sequence as Criteria;
+/// Alias for a cell reference. A cell range containing headers and a data set.
+pub use Reference as Database;
+/// Alias for a cell reference. A cell range containing headers and filters.
+pub use Reference as Criteria;
 
-pub trait NumberOp<T> {
-    fn add<U: Number>(&self, other: U) -> FNumber;
-    fn sub<U: Number>(&self, other: U) -> FNumber;
-    fn mul<U: Number>(&self, other: U) -> FNumber;
-    fn div<U: Number>(&self, other: U) -> FNumber;
+/// Comparision operators
+pub trait AnyOp<T> {
+    /// equal
+    fn eq<U: Any>(&self, other: U) -> FLogical;
+    /// not equal
+    fn ne<U: Any>(&self, other: U) -> FLogical;
+    /// less than
+    fn lt<U: Any>(&self, other: U) -> FLogical;
+    /// less than or equal
+    fn le<U: Any>(&self, other: U) -> FLogical;
+    /// greater than
+    fn gt<U: Any>(&self, other: U) -> FLogical;
+    /// greater than or equal
+    fn ge<U: Any>(&self, other: U) -> FLogical;
 }
-
+/// Operations on number-like values.
+pub trait NumberOp<T> {
+    /// add
+    fn add<U: Number>(&self, other: U) -> FNumber;
+    /// subtract
+    fn sub<U: Number>(&self, other: U) -> FNumber;
+    /// multiply
+    fn mul<U: Number>(&self, other: U) -> FNumber;
+    /// divide
+    fn div<U: Number>(&self, other: U) -> FNumber;
+    /// exponential
+    fn pow<U: Number>(&self, other: U) -> FNumber;
+    /// as percentage
+    fn percent(&self) -> FNumber;
+}
+/// Operations on text-like values.
 pub trait TextOp<T> {
+    /// concat text
     fn concat<U: Text>(&self, other: U) -> FText;
 }
-
-pub trait LogicalOp<T> {}
-
+/// Operations on boolean-like values.
+pub trait LogicalOp<T> {
+    // TODO??
+}
+/// Operations on references.
 pub trait ReferenceOp<T> {
+    /// intersection of references
     fn intersect<U: Reference>(&self, other: U) -> FReference;
+    /// concatenation of references
     fn refcat<U: Reference>(&self, other: U) -> FReference;
 }
 
-pub trait MatrixOp<T> {}
-pub trait CriterionOp<T> {}
-pub trait SequenceOp<T> {}
+// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 
-// -----------------------------------------------------------------------
-// -----------------------------------------------------------------------
+impl<T: Any> AnyOp<T> for T {
+    fn eq<U: Any>(&self, other: U) -> FLogical {
+        eq(self, other)
+    }
+
+    fn ne<U: Any>(&self, other: U) -> FLogical {
+        ne(self, other)
+    }
+
+    fn lt<U: Any>(&self, other: U) -> FLogical {
+        lt(self, other)
+    }
+
+    fn le<U: Any>(&self, other: U) -> FLogical {
+        le(self, other)
+    }
+
+    fn gt<U: Any>(&self, other: U) -> FLogical {
+        gt(self, other)
+    }
+
+    fn ge<U: Any>(&self, other: U) -> FLogical {
+        ge(self, other)
+    }
+}
 
 impl<T: Number> NumberOp<T> for T {
     fn add<U: Number>(&self, other: U) -> FNumber {
@@ -96,6 +162,14 @@ impl<T: Number> NumberOp<T> for T {
 
     fn div<U: Number>(&self, other: U) -> FNumber {
         div(self, other)
+    }
+
+    fn pow<U: Number>(&self, other: U) -> FNumber {
+        pow(self, other)
+    }
+
+    fn percent(&self) -> FNumber {
+        percent(self)
     }
 }
 
@@ -116,13 +190,10 @@ impl<T: Reference> ReferenceOp<T> for T {
     }
 }
 
-impl<T: Matrix> MatrixOp<T> for T {}
-impl<T: Criterion> CriterionOp<T> for T {}
-impl<T: Sequence> SequenceOp<T> for T {}
-
 // -----------------------------------------------------------------------
 // -----------------------------------------------------------------------
 
+/// Number value.
 pub struct FNumber(String);
 impl Any for FNumber {
     fn formula(&self, buf: &mut String) {
@@ -136,6 +207,7 @@ impl TextOrNumber for FNumber {}
 impl Field for FNumber {}
 impl DateTimeParam for FNumber {}
 
+/// Text value.
 pub struct FText(String);
 impl Any for FText {
     fn formula(&self, buf: &mut String) {
@@ -148,6 +220,7 @@ impl TextOrNumber for FText {}
 impl Field for FText {}
 impl DateTimeParam for FText {}
 
+/// Logical value.
 pub struct FLogical(String);
 impl Any for FLogical {
     fn formula(&self, buf: &mut String) {
@@ -159,6 +232,7 @@ impl Number for FLogical {}
 impl Sequence for FLogical {}
 impl TextOrNumber for FLogical {}
 
+/// Matrix value.
 pub struct FMatrix(String);
 impl Any for FMatrix {
     fn formula(&self, buf: &mut String) {
@@ -167,6 +241,7 @@ impl Any for FMatrix {
 }
 impl Matrix for FMatrix {}
 
+/// Reference value.
 pub struct FReference(String);
 impl Any for FReference {
     fn formula(&self, buf: &mut String) {
@@ -183,6 +258,7 @@ impl TextOrNumber for FReference {}
 impl Field for FReference {}
 impl DateTimeParam for FReference {}
 
+/// Filter criteria.
 pub enum FCriterion<F> {
     V(F),
     Eq(F),
@@ -231,7 +307,7 @@ impl<F: Any> Criterion for FCriterion<F> {}
 // -----------------------------------------------------------------------
 // -----------------------------------------------------------------------
 
-/// formula
+/// Creates a formula from any formula expression.
 pub fn formula<T: Any>(f: T) -> String {
     let mut buf = String::new();
     buf.push_str("of=");
@@ -354,6 +430,8 @@ tup!(A B 1 C 2 D 3 E 4 F 5 G 6 H 7 I 8 J 9 K 10 L 11 M 12 N 13 O 14 P 15 Q 16 R 
 tup!(A B 1 C 2 D 3 E 4 F 5 G 6 H 7 I 8 J 9 K 10 L 11 M 12 N 13 O 14 P 15 Q 16 R 17 S 18 T 19);
 tup!(A B 1 C 2 D 3 E 4 F 5 G 6 H 7 I 8 J 9 K 10 L 11 M 12 N 13 O 14 P 15 Q 16 R 17 S 18 T 19 U 20);
 
+/// An expression in parentheses.
+/// Use p() / parentheses() to create one.
 pub struct FParentheses<A>(A);
 impl<A: Any> Any for FParentheses<A> {
     fn formula(&self, buf: &mut String) {
@@ -371,6 +449,7 @@ impl<A: TextOrNumber> TextOrNumber for FParentheses<A> {}
 impl<A: Field> Field for FParentheses<A> {}
 impl<A: DateTimeParam> DateTimeParam for FParentheses<A> {}
 
+/// Creates an expression in parentheses. Aliased as p().
 pub fn parentheses<A: Any>(a: A) -> FParentheses<A> {
     FParentheses(a)
 }
@@ -497,6 +576,7 @@ impl DateTimeParam for CellRange {}
 // -----------------------------------------------------------------------
 // -----------------------------------------------------------------------
 
+/// Adds two numbers. Also available as postfix add() and as operator +.
 pub fn add<'a, A: Number, B: Number>(a: A, b: B) -> FNumber {
     FNumber(infix(a, "+", b))
 }
@@ -518,6 +598,7 @@ impl<A: Number> Add<A> for FParentheses<A> {
     }
 }
 
+/// Subtracts two numbers. Also available as postfix sub() and as operator -.
 pub fn sub<'a, A: Number, B: Number>(a: A, b: B) -> FNumber {
     FNumber(infix(a, "-", b))
 }
@@ -539,6 +620,7 @@ impl<A: Number> Sub<A> for FParentheses<A> {
     }
 }
 
+/// Multiplies to numbers. Also available as postfix mul() and as operator *;
 pub fn mul<'a, A: Number, B: Number>(a: A, b: B) -> FNumber {
     FNumber(infix(a, "*", b))
 }
@@ -560,6 +642,7 @@ impl<A: Number> Mul<A> for FParentheses<A> {
     }
 }
 
+/// Divides to numbers. Also available as postfix div() and as operator /.
 pub fn div<'a, A: Number, B: Number>(a: A, b: B) -> FNumber {
     FNumber(infix(a, "/", b))
 }
@@ -581,9 +664,11 @@ impl<A: Number> Div<A> for FParentheses<A> {
     }
 }
 
+/// Exponential function. Also available as postfix pow() and as operator ^.
 pub fn pow<'a, A: Number, B: Number>(a: A, b: B) -> FNumber {
     FNumber(infix(a, "^", b))
 }
+/// Not bitwise xor but exponential.
 impl<'a, A: Number> BitXor<A> for FNumber {
     type Output = FNumber;
 
@@ -594,6 +679,7 @@ impl<'a, A: Number> BitXor<A> for FNumber {
         self
     }
 }
+/// Not bitwise xor but exponential.
 impl<A: Number> BitXor<A> for FParentheses<A> {
     type Output = FNumber;
 
@@ -602,6 +688,7 @@ impl<A: Number> BitXor<A> for FParentheses<A> {
     }
 }
 
+/// Negates as number. Also available as prefix operator -.
 pub fn neg<'a, A: Number>(a: A) -> FNumber {
     FNumber(prefix("-", a))
 }
@@ -622,34 +709,42 @@ impl<A: Number> Neg for FParentheses<A> {
     }
 }
 
+/// equal
 pub fn eq<'a, A: Any, B: Any>(a: A, b: B) -> FLogical {
     FLogical(infix(a, "=", b))
 }
 
+/// inequal
 pub fn ne<'a, A: Any, B: Any>(a: A, b: B) -> FLogical {
     FLogical(infix(a, "<>", b))
 }
 
+/// less than
 pub fn lt<'a, A: Any, B: Any>(a: A, b: B) -> FLogical {
     FLogical(infix(a, "<", b))
 }
 
+/// less than or equal
 pub fn le<'a, A: Any, B: Any>(a: A, b: B) -> FLogical {
     FLogical(infix(a, "<=", b))
 }
 
+/// greater than
 pub fn gt<'a, A: Any, B: Any>(a: A, b: B) -> FLogical {
     FLogical(infix(a, ">", b))
 }
 
+/// greater than or equal
 pub fn ge<'a, A: Any, B: Any>(a: A, b: B) -> FLogical {
     FLogical(infix(a, ">=", b))
 }
 
+/// percentage. Also available as postfix percent()
 pub fn percent<'a, A: Number>(a: A) -> FNumber {
     FNumber(postfix(a, "%"))
 }
 
+/// concatenates two strings. Also available as postfix concat() and as operator &.
 pub fn concat<'a, A: Text, B: Text>(a: A, b: B) -> FText {
     FText(infix(a, "&", b))
 }
@@ -674,15 +769,3 @@ pub fn refcat<'a, A: Reference, B: Reference>(a: A, b: B) -> FReference {
 
 // -----------------------------------------------------------------------
 // -----------------------------------------------------------------------
-
-pub fn count<'a, A: Number>(a: A) -> FNumber {
-    FNumber(func("COUNT", &[&a]))
-}
-
-pub fn cos<'a, A: Number>(a: A) -> FNumber {
-    FNumber(func("COS", &[&a]))
-}
-
-pub fn sum<'a, A: Sequence>(a: A) -> FNumber {
-    FNumber(func("SUM", &[&a]))
-}
