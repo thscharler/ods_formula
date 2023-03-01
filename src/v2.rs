@@ -1,119 +1,208 @@
 use spreadsheet_ods::{CellRange, CellRef};
-use std::borrow::Cow;
 use std::fmt;
 use std::fmt::Write;
 use std::ops::{Add, BitAnd, Rem};
 
 pub mod prelude {
+    pub use super::parentheses as p;
     pub use super::{Any, Criterion, Logical, Number, Reference, Text};
+    pub use super::{CriterionOp, LogicalOp, NumberOp, ReferenceOp, TextOp};
 }
 
 pub trait Any {
     fn formula(&self, buf: &mut String);
 }
 pub trait Number: Any {
-    fn n<'a>(&self) -> FNumber<'a> {
+    fn n(&self) -> FNumber {
         let mut buf = String::new();
         let _ = self.formula(&mut buf);
-        FNumber(Cow::Owned(buf))
-    }
-
-    fn add<'a, T: Number>(&self, other: T) -> FNumber<'a> {
-        add(self, other)
-    }
-    fn sub<'a, T: Number>(&self, other: T) -> FNumber<'a> {
-        sub(self, other)
-    }
-    fn mul<'a, T: Number>(&self, other: T) -> FNumber<'a> {
-        mul(self, other)
-    }
-    fn div<'a, T: Number>(&self, other: T) -> FNumber<'a> {
-        div(self, other)
+        FNumber(buf)
     }
 }
 pub trait Text: Any {
-    fn t<'a>(&self) -> FText<'a> {
+    fn t(&self) -> FText {
         let mut buf = String::new();
         let _ = self.formula(&mut buf);
-        FText(Cow::Owned(buf))
-    }
-
-    fn concat<'a, T: Text>(&self, other: T) -> FText<'a> {
-        concat(self, other)
+        FText(buf)
     }
 }
 pub trait Logical: Any {
-    fn b<'a>(&self) -> FLogical<'a> {
+    fn b(&self) -> FLogical {
         let mut buf = String::new();
         let _ = self.formula(&mut buf);
-        FLogical(Cow::Owned(buf))
+        FLogical(buf)
     }
 }
 pub trait Reference: Any {
-    fn r<'a>(&self) -> FReference<'a> {
+    fn r(&self) -> FReference {
         let mut buf = String::new();
         let _ = self.formula(&mut buf);
-        FReference(Cow::Owned(buf))
-    }
-
-    fn intersect<'a, T: Reference>(&self, other: T) -> FReference<'a> {
-        intersect(self, other)
-    }
-    fn refcat<'a, T: Reference>(&self, other: T) -> FReference<'a> {
-        refcat(self, other)
+        FReference(buf)
     }
 }
 pub trait Criterion: Any {}
+pub trait Sequence: Any {}
 pub trait TextOrNumber: Any {}
 
-pub struct FNumber<'a>(Cow<'a, str>);
-impl<'a> Any for FNumber<'a> {
-    fn formula(&self, buf: &mut String) {
-        buf.push_str(self.0.as_ref());
-    }
+pub trait NumberOp<T> {
+    fn add<U: Number>(&self, other: U) -> FNumber;
+    fn sub<U: Number>(&self, other: U) -> FNumber;
+    fn mul<U: Number>(&self, other: U) -> FNumber;
+    fn div<U: Number>(&self, other: U) -> FNumber;
 }
-impl<'a> Number for FNumber<'a> {}
-impl<'a> Logical for FNumber<'a> {}
-impl<'a> TextOrNumber for FNumber<'a> {}
 
-pub struct FText<'a>(Cow<'a, str>);
-impl<'a> Any for FText<'a> {
-    fn formula(&self, buf: &mut String) {
-        buf.push_str(self.0.as_ref());
-    }
+pub trait TextOp<T> {
+    fn concat<U: Text>(&self, other: U) -> FText;
 }
-impl<'a> Text for FText<'a> {}
-impl<'a> TextOrNumber for FText<'a> {}
 
-pub struct FLogical<'a>(Cow<'a, str>);
-impl<'a> Any for FLogical<'a> {
-    fn formula(&self, buf: &mut String) {
-        buf.push_str(self.0.as_ref());
-    }
-}
-impl<'a> Logical for FLogical<'a> {}
-impl<'a> Number for FLogical<'a> {}
-impl<'a> TextOrNumber for FLogical<'a> {}
+pub trait LogicalOp<T> {}
 
-pub struct FReference<'a>(Cow<'a, str>);
-impl<'a> Any for FReference<'a> {
-    fn formula(&self, buf: &mut String) {
-        buf.push_str(self.0.as_ref());
-    }
+pub trait ReferenceOp<T> {
+    fn intersect<U: Reference>(&self, other: U) -> FReference;
+    fn refcat<U: Reference>(&self, other: U) -> FReference;
 }
-impl<'a> Reference for FReference<'a> {}
-impl<'a> Number for FReference<'a> {}
-impl<'a> Text for FReference<'a> {}
-impl<'a> Logical for FReference<'a> {}
-impl<'a> TextOrNumber for FReference<'a> {}
 
-pub struct FCriterion<'a>(Cow<'a, str>);
-impl<'a> Any for FCriterion<'a> {
+pub trait CriterionOp<T> {}
+pub trait SequenceOp<T> {}
+pub trait TextOrNumberOp<T> {}
+
+// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
+
+impl<T: Number> NumberOp<T> for T {
+    fn add<U: Number>(&self, other: U) -> FNumber {
+        add(self, other)
+    }
+
+    fn sub<U: Number>(&self, other: U) -> FNumber {
+        sub(self, other)
+    }
+
+    fn mul<U: Number>(&self, other: U) -> FNumber {
+        mul(self, other)
+    }
+
+    fn div<U: Number>(&self, other: U) -> FNumber {
+        div(self, other)
+    }
+}
+
+impl<T: Text> TextOp<T> for T {
+    fn concat<U: Text>(&self, other: U) -> FText {
+        concat(self, other)
+    }
+}
+
+impl<T: Logical> LogicalOp<T> for T {}
+
+impl<T: Reference> ReferenceOp<T> for T {
+    fn intersect<U: Reference>(&self, other: U) -> FReference {
+        intersect(self, other)
+    }
+    fn refcat<U: Reference>(&self, other: U) -> FReference {
+        refcat(self, other)
+    }
+}
+
+impl<T: Criterion> CriterionOp<T> for T {}
+impl<T: Sequence> SequenceOp<T> for T {}
+impl<T: TextOrNumber> TextOrNumberOp<T> for T {}
+
+// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
+
+pub struct FNumber(String);
+impl Any for FNumber {
     fn formula(&self, buf: &mut String) {
         buf.push_str(self.0.as_ref());
     }
 }
-impl<'a> Criterion for FCriterion<'a> {}
+impl Number for FNumber {}
+impl Logical for FNumber {}
+impl Sequence for FNumber {}
+impl TextOrNumber for FNumber {}
+
+pub struct FText(String);
+impl Any for FText {
+    fn formula(&self, buf: &mut String) {
+        buf.push_str(self.0.as_ref());
+    }
+}
+impl Text for FText {}
+impl Sequence for FText {}
+impl TextOrNumber for FText {}
+
+pub struct FLogical(String);
+impl Any for FLogical {
+    fn formula(&self, buf: &mut String) {
+        buf.push_str(self.0.as_ref());
+    }
+}
+impl Logical for FLogical {}
+impl Number for FLogical {}
+impl Sequence for FLogical {}
+impl TextOrNumber for FLogical {}
+
+pub struct FReference(String);
+impl Any for FReference {
+    fn formula(&self, buf: &mut String) {
+        buf.push_str(self.0.as_ref());
+    }
+}
+impl Reference for FReference {}
+impl Number for FReference {}
+impl Text for FReference {}
+impl Logical for FReference {}
+impl Sequence for FReference {}
+impl TextOrNumber for FReference {}
+
+pub enum FCriterion<F> {
+    V(F),
+    Eq(F),
+    Ne(F),
+    Lt(F),
+    Gt(F),
+    LtEq(F),
+    GtEq(F),
+}
+
+impl<F: Any> Any for FCriterion<F> {
+    fn formula(&self, buf: &mut String) {
+        match self {
+            FCriterion::V(f) => {
+                f.formula(buf);
+            }
+            FCriterion::Eq(f) => {
+                buf.push_str("\"=\"&");
+                f.formula(buf);
+            }
+            FCriterion::Ne(f) => {
+                buf.push_str("\"<>\"&");
+                f.formula(buf);
+            }
+            FCriterion::Lt(f) => {
+                buf.push_str("\"<\"&");
+                f.formula(buf);
+            }
+            FCriterion::Gt(f) => {
+                buf.push_str("\">\"&");
+                f.formula(buf);
+            }
+            FCriterion::LtEq(f) => {
+                buf.push_str("\"<=\"&");
+                f.formula(buf);
+            }
+            FCriterion::GtEq(f) => {
+                buf.push_str("\">=\"&");
+                f.formula(buf);
+            }
+        }
+    }
+}
+impl<F: Any> Criterion for FCriterion<F> {}
+
+// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 
 /// formula
 pub fn formula<T: Any>(f: T) -> String {
@@ -124,7 +213,7 @@ pub fn formula<T: Any>(f: T) -> String {
 }
 
 #[inline]
-fn func<'a>(name: &str, args: &[&dyn Any]) -> Cow<'a, str> {
+fn func(name: &str, args: &[&dyn Any]) -> String {
     let mut buf = String::new();
     buf.push_str(name);
     buf.push('(');
@@ -135,16 +224,16 @@ fn func<'a>(name: &str, args: &[&dyn Any]) -> Cow<'a, str> {
         let _ = v.formula(&mut buf);
     }
     buf.push(')');
-    Cow::Owned(buf)
+    buf
 }
 
 #[inline]
-fn infix<'a, A: Any, B: Any>(a: A, op: &str, b: B) -> Cow<'a, str> {
+fn infix<'a, A: Any, B: Any>(a: A, op: &str, b: B) -> String {
     let mut buf = String::new();
     a.formula(&mut buf);
     buf.push_str(op);
     b.formula(&mut buf);
-    Cow::Owned(buf)
+    buf
 }
 
 // -----------------------------------------------------------------------
@@ -160,6 +249,7 @@ impl<T: Text + Any + ?Sized> Text for &T {}
 impl<T: Logical + Any + ?Sized> Logical for &T {}
 impl<T: Reference + Any + ?Sized> Reference for &T {}
 impl<T: Criterion + Any + ?Sized> Criterion for &T {}
+impl<T: Sequence + Any + ?Sized> Sequence for &T {}
 impl<T: TextOrNumber + Any + ?Sized> TextOrNumber for &T {}
 
 impl<T: Any, const N: usize> Any for [T; N] {
@@ -172,11 +262,7 @@ impl<T: Any, const N: usize> Any for [T; N] {
         }
     }
 }
-impl<T: Reference, const N: usize> Reference for [T; N] {}
-impl<T: Number, const N: usize> Number for [T; N] {}
-impl<T: Text, const N: usize> Text for [T; N] {}
-impl<T: Logical, const N: usize> Logical for [T; N] {}
-impl<T: TextOrNumber, const N: usize> TextOrNumber for [T; N] {}
+impl<T: Any, const N: usize> Sequence for [T; N] {}
 
 impl<T: Any> Any for (T,) {
     fn formula(&self, buf: &mut String) {
@@ -190,7 +276,27 @@ impl<T: Text> Text for (T,) {}
 impl<T: Logical> Logical for (T,) {}
 impl<T: Reference> Reference for (T,) {}
 impl<T: Criterion> Criterion for (T,) {}
+impl<T: Sequence> Sequence for (T,) {}
 impl<T: TextOrNumber> TextOrNumber for (T,) {}
+
+pub struct FParentheses<A>(A);
+impl<A: Any> Any for FParentheses<A> {
+    fn formula(&self, buf: &mut String) {
+        buf.push('(');
+        self.0.formula(buf);
+        buf.push(')');
+    }
+}
+impl<A: Number> Number for FParentheses<A> {}
+impl<A: Text> Text for FParentheses<A> {}
+impl<A: Logical> Logical for FParentheses<A> {}
+impl<A: Reference> Reference for FParentheses<A> {}
+impl<A: Sequence> Sequence for FParentheses<A> {}
+impl<A: TextOrNumber> TextOrNumber for FParentheses<A> {}
+
+pub fn parentheses<A: Any>(a: A) -> FParentheses<A> {
+    FParentheses(a)
+}
 
 // -----------------------------------------------------------------------
 // -----------------------------------------------------------------------
@@ -204,6 +310,7 @@ macro_rules! value_number {
         }
         impl Number for $t {}
         impl Logical for $t {}
+        impl Sequence for $t {}
         impl TextOrNumber for $t {}
     };
 }
@@ -230,6 +337,7 @@ impl Any for bool {
 }
 impl Logical for bool {}
 impl Number for bool {}
+impl Sequence for bool {}
 
 impl Any for &str {
     fn formula(&self, buf: &mut String) {
@@ -250,6 +358,7 @@ impl Any for &str {
     }
 }
 impl Text for &str {}
+impl Sequence for &str {}
 impl TextOrNumber for &str {}
 
 impl Any for String {
@@ -271,25 +380,8 @@ impl Any for String {
     }
 }
 impl Text for String {}
+impl Sequence for String {}
 impl TextOrNumber for String {}
-
-pub struct Parentheses<A>(A);
-impl<A: Any> Any for Parentheses<A> {
-    fn formula(&self, buf: &mut String) {
-        buf.push('(');
-        self.0.formula(buf);
-        buf.push(')');
-    }
-}
-impl<A: Number> Number for Parentheses<A> {}
-impl<A: Text> Text for Parentheses<A> {}
-impl<A: Logical> Logical for Parentheses<A> {}
-impl<A: Reference> Reference for Parentheses<A> {}
-impl<A: TextOrNumber> TextOrNumber for Parentheses<A> {}
-
-pub fn par<A: Any>(a: A) -> Parentheses<A> {
-    Parentheses(a)
-}
 
 impl Any for CellRef {
     fn formula(&self, buf: &mut String) {
@@ -300,6 +392,7 @@ impl Reference for CellRef {}
 impl Number for CellRef {}
 impl Text for CellRef {}
 impl Logical for CellRef {}
+impl Sequence for CellRef {}
 impl TextOrNumber for CellRef {}
 
 impl Any for CellRange {
@@ -311,87 +404,88 @@ impl Reference for CellRange {}
 impl Number for CellRange {}
 impl Text for CellRange {}
 impl Logical for CellRange {}
+impl Sequence for CellRange {}
 impl TextOrNumber for CellRange {}
 
 // -----------------------------------------------------------------------
 // -----------------------------------------------------------------------
 
-pub fn add<'a, A: Number, B: Number>(a: A, b: B) -> FNumber<'a> {
+pub fn add<'a, A: Number, B: Number>(a: A, b: B) -> FNumber {
     FNumber(infix(a, "+", b))
 }
-pub fn sub<'a, A: Number, B: Number>(a: A, b: B) -> FNumber<'a> {
+pub fn sub<'a, A: Number, B: Number>(a: A, b: B) -> FNumber {
     FNumber(infix(a, "-", b))
 }
-pub fn mul<'a, A: Number, B: Number>(a: A, b: B) -> FNumber<'a> {
+pub fn mul<'a, A: Number, B: Number>(a: A, b: B) -> FNumber {
     FNumber(infix(a, "*", b))
 }
-pub fn div<'a, A: Number, B: Number>(a: A, b: B) -> FNumber<'a> {
+pub fn div<'a, A: Number, B: Number>(a: A, b: B) -> FNumber {
     FNumber(infix(a, "/", b))
 }
 
-impl<'a, A: Number> Add<A> for FNumber<'a> {
-    type Output = FNumber<'a>;
+impl<'a, A: Number> Add<A> for FNumber {
+    type Output = FNumber;
 
     fn add(mut self, rhs: A) -> Self::Output {
-        let buf = self.0.to_mut();
+        let buf = &mut self.0;
         buf.push('+');
         let _ = rhs.formula(buf);
         self
     }
 }
-impl<A: Number> Add<A> for Parentheses<A> {
-    type Output = FNumber<'a>;
+impl<A: Number> Add<A> for FParentheses<A> {
+    type Output = FNumber;
 
     fn add(mut self, rhs: A) -> Self::Output {
         FNumber(infix(self, "+", rhs))
     }
 }
 
-pub fn eq<'a, A: Any, B: Any>(a: A, b: B) -> FLogical<'a> {
+pub fn eq<'a, A: Any, B: Any>(a: A, b: B) -> FLogical {
     FLogical(infix(a, "=", b))
 }
 
-pub fn concat<'a, A: Text, B: Text>(a: A, b: B) -> FText<'a> {
-    FText(infix(a, "%", b))
+pub fn concat<'a, A: Text, B: Text>(a: A, b: B) -> FText {
+    FText(infix(a, "&", b))
 }
 
-impl<'a, A: Text> BitAnd<A> for FText<'a> {
-    type Output = FText<'a>;
+impl<'a, A: Text> BitAnd<A> for FText {
+    type Output = FText;
 
     fn bitand(mut self, rhs: A) -> Self::Output {
-        let buf = self.0.to_mut();
-        buf.push('%');
+        let buf = &mut self.0;
+        buf.push('&');
         let _ = rhs.formula(buf);
         self
     }
 }
 
-pub fn intersect<'a, A: Reference, B: Reference>(a: A, b: B) -> FReference<'a> {
+pub fn intersect<'a, A: Reference, B: Reference>(a: A, b: B) -> FReference {
     FReference(infix(a, "!", b))
 }
-pub fn refcat<'a, A: Reference, B: Reference>(a: A, b: B) -> FReference<'a> {
+pub fn refcat<'a, A: Reference, B: Reference>(a: A, b: B) -> FReference {
     FReference(infix(a, "~", b))
 }
 
 // -----------------------------------------------------------------------
 // -----------------------------------------------------------------------
 
-pub fn date<'a, D: Number, M: Number, Y: Number>(day: D, month: M, year: Y) -> FNumber<'a> {
+pub fn date<'a, D: Number, M: Number, Y: Number>(day: D, month: M, year: Y) -> FNumber {
     FNumber(func("DATE", &[&day, &month, &year]))
 }
 
-pub fn date_value<'a, A: Text>(a: A) -> FNumber<'a> {
+pub fn date_value<'a, A: Text>(a: A) -> FNumber {
     FNumber(func("DATEVALUE", &[&a]))
 }
 
-pub fn count<'a, A: Number>(a: A) -> FNumber<'a> {
+pub fn count<'a, A: Number>(a: A) -> FNumber {
     FNumber(func("COUNT", &[&a]))
 }
 
-pub fn cos<'a, A: Number>(a: A) -> FNumber<'a> {
+pub fn cos<'a, A: Number>(a: A) -> FNumber {
     FNumber(func("COS", &[&a]))
 }
 
-pub fn sum<'a, A: Number>(a: A) -> FNumber<'a> {
+pub fn sum<'a, A: Sequence>(a: A) -> FNumber {
     FNumber(func("SUM", &[&a]))
 }

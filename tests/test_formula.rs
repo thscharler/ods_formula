@@ -8,7 +8,15 @@ mod result_test;
 const Q: ReportValues = ReportValues;
 
 #[test]
-fn test_val() {}
+fn test_val() {
+    let ff = p(35.n() + 17);
+    let x = 9;
+    // let xf = ff + x;
+
+    let ff = p(35.n() + 17);
+    let x = 9;
+    // let xf = x + ff;
+}
 
 #[test]
 fn test_str() {
@@ -34,17 +42,17 @@ fn nest1() {
     nest(of::formula(35i64)).q(Q);
 
     nest(of::formula(35.add(17))).q(Q);
-    nest(of::formula(of::par(35.n() + 17) + 9)).q(Q);
-    nest(of::formula(of::par(35.mul(17)))).q(Q);
-    nest(of::formula(of::par(CellRef::local(17, 12).mul(17))))
+    nest(of::formula(p(35.n() + 17).add(9))).q(Q);
+    nest(of::formula(p(35.n() + 17).n() + 9)).q(Q);
+    nest(of::formula(p(35.mul(17)))).q(Q);
+    nest(of::formula(p(CellRef::local(17, 12).mul(17))))
         .ok()
         .q(Q);
 
     nest(of::formula(35)).q(Q);
 
-    nest(of::formula(of::count([
-        CellRange::origin_span(27, 1, (10, 10)),
-        CellRange::local(4, 5, 25, 10),
-    ])))
+    nest(of::formula(of::count(
+        CellRange::origin_span(27, 1, (10, 10)).refcat(CellRange::local(4, 5, 25, 10)),
+    )))
     .q(Q);
 }
