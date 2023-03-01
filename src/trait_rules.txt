@@ -38,12 +38,18 @@ Logical
                         Number
                         Reference
 
+Matrix              manual
+                        Matrix
+                    with
+                        Reference
+
 Reference
                     manual
                         Reference
                         Number
                         Text
                         Logical
+                        Matrix
                         TextOrNumber
 
 Criterion

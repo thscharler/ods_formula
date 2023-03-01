@@ -1,7 +1,13 @@
 use spreadsheet_ods::{CellRange, CellRef};
-use std::fmt;
 use std::fmt::Write;
-use std::ops::{Add, BitAnd, Rem};
+use std::ops::{Add, BitAnd, BitXor, Div, Mul, Neg, Sub};
+
+pub mod bitop;
+pub mod complex;
+pub mod database;
+pub mod date;
+pub mod extaccess;
+pub mod matrix;
 
 pub mod prelude {
     pub use super::parentheses as p;
@@ -40,9 +46,15 @@ pub trait Reference: Any {
         FReference(buf)
     }
 }
+pub trait Matrix: Any {}
 pub trait Criterion: Any {}
 pub trait Sequence: Any {}
 pub trait TextOrNumber: Any {}
+pub trait Field: Any {}
+pub trait DateTimeParam: Any {}
+
+pub use Sequence as Database;
+pub use Sequence as Criteria;
 
 pub trait NumberOp<T> {
     fn add<U: Number>(&self, other: U) -> FNumber;
@@ -62,9 +74,9 @@ pub trait ReferenceOp<T> {
     fn refcat<U: Reference>(&self, other: U) -> FReference;
 }
 
+pub trait MatrixOp<T> {}
 pub trait CriterionOp<T> {}
 pub trait SequenceOp<T> {}
-pub trait TextOrNumberOp<T> {}
 
 // -----------------------------------------------------------------------
 // -----------------------------------------------------------------------
@@ -104,9 +116,9 @@ impl<T: Reference> ReferenceOp<T> for T {
     }
 }
 
+impl<T: Matrix> MatrixOp<T> for T {}
 impl<T: Criterion> CriterionOp<T> for T {}
 impl<T: Sequence> SequenceOp<T> for T {}
-impl<T: TextOrNumber> TextOrNumberOp<T> for T {}
 
 // -----------------------------------------------------------------------
 // -----------------------------------------------------------------------
@@ -121,6 +133,8 @@ impl Number for FNumber {}
 impl Logical for FNumber {}
 impl Sequence for FNumber {}
 impl TextOrNumber for FNumber {}
+impl Field for FNumber {}
+impl DateTimeParam for FNumber {}
 
 pub struct FText(String);
 impl Any for FText {
@@ -131,6 +145,8 @@ impl Any for FText {
 impl Text for FText {}
 impl Sequence for FText {}
 impl TextOrNumber for FText {}
+impl Field for FText {}
+impl DateTimeParam for FText {}
 
 pub struct FLogical(String);
 impl Any for FLogical {
@@ -143,6 +159,14 @@ impl Number for FLogical {}
 impl Sequence for FLogical {}
 impl TextOrNumber for FLogical {}
 
+pub struct FMatrix(String);
+impl Any for FMatrix {
+    fn formula(&self, buf: &mut String) {
+        buf.push_str(self.0.as_ref());
+    }
+}
+impl Matrix for FMatrix {}
+
 pub struct FReference(String);
 impl Any for FReference {
     fn formula(&self, buf: &mut String) {
@@ -153,8 +177,11 @@ impl Reference for FReference {}
 impl Number for FReference {}
 impl Text for FReference {}
 impl Logical for FReference {}
+impl Matrix for FReference {}
 impl Sequence for FReference {}
 impl TextOrNumber for FReference {}
+impl Field for FReference {}
+impl DateTimeParam for FReference {}
 
 pub enum FCriterion<F> {
     V(F),
@@ -236,6 +263,22 @@ fn infix<'a, A: Any, B: Any>(a: A, op: &str, b: B) -> String {
     buf
 }
 
+#[inline]
+fn prefix<'a, A: Any>(op: &str, a: A) -> String {
+    let mut buf = String::new();
+    buf.push_str(op);
+    a.formula(&mut buf);
+    buf
+}
+
+#[inline]
+fn postfix<'a, A: Any>(a: A, op: &str) -> String {
+    let mut buf = String::new();
+    a.formula(&mut buf);
+    buf.push_str(op);
+    buf
+}
+
 // -----------------------------------------------------------------------
 // -----------------------------------------------------------------------
 
@@ -250,34 +293,66 @@ impl<T: Logical + Any + ?Sized> Logical for &T {}
 impl<T: Reference + Any + ?Sized> Reference for &T {}
 impl<T: Criterion + Any + ?Sized> Criterion for &T {}
 impl<T: Sequence + Any + ?Sized> Sequence for &T {}
+impl<T: Matrix + Any + ?Sized> Matrix for &T {}
 impl<T: TextOrNumber + Any + ?Sized> TextOrNumber for &T {}
+impl<T: Field + Any + ?Sized> Field for &T {}
+impl<T: DateTimeParam + Any + ?Sized> DateTimeParam for &T {}
 
-impl<T: Any, const N: usize> Any for [T; N] {
+impl<T: Any, const N: usize, const M: usize> Any for [[T; M]; N] {
     fn formula(&self, buf: &mut String) {
+        buf.push('{');
         for (i, r) in self.iter().enumerate() {
             if i > 0 {
-                buf.push(';');
+                buf.push('|');
             }
-            r.formula(buf);
+            for (j, c) in r.iter().enumerate() {
+                if j > 0 {
+                    buf.push(';');
+                }
+                c.formula(buf);
+            }
         }
     }
 }
-impl<T: Any, const N: usize> Sequence for [T; N] {}
+impl<T: Number, const N: usize, const M: usize> Matrix for [[T; M]; N] {}
+impl<T: Any, const N: usize, const M: usize> Sequence for [[T; M]; N] {}
 
-impl<T: Any> Any for (T,) {
-    fn formula(&self, buf: &mut String) {
-        buf.push('(');
-        self.0.formula(buf);
-        buf.push(')');
+macro_rules! tup {
+    ( $tzero:ident $($tname:tt $tnum:tt)* ) => {
+        impl<$tzero: Any, $($tname: Any,)*> Any for ($tzero, $($tname,)*) {
+            fn formula(&self, buf: &mut String) {
+                self.0.formula(buf);
+                $(
+                    buf.push(';');
+                    self . $tnum .formula(buf);
+                )*
+            }
+        }
+        impl<$tzero: Any, $($tname: Any,)*> Sequence for ($tzero, $($tname,)*) {}
     }
 }
-impl<T: Number> Number for (T,) {}
-impl<T: Text> Text for (T,) {}
-impl<T: Logical> Logical for (T,) {}
-impl<T: Reference> Reference for (T,) {}
-impl<T: Criterion> Criterion for (T,) {}
-impl<T: Sequence> Sequence for (T,) {}
-impl<T: TextOrNumber> TextOrNumber for (T,) {}
+
+tup!(A);
+tup!(A B 1 );
+tup!(A B 1 C 2 );
+tup!(A B 1 C 2 D 3);
+tup!(A B 1 C 2 D 3 E 4);
+tup!(A B 1 C 2 D 3 E 4 F 5);
+tup!(A B 1 C 2 D 3 E 4 F 5 G 6);
+tup!(A B 1 C 2 D 3 E 4 F 5 G 6 H 7);
+tup!(A B 1 C 2 D 3 E 4 F 5 G 6 H 7 I 8);
+tup!(A B 1 C 2 D 3 E 4 F 5 G 6 H 7 I 8 J 9);
+tup!(A B 1 C 2 D 3 E 4 F 5 G 6 H 7 I 8 J 9 K 10);
+tup!(A B 1 C 2 D 3 E 4 F 5 G 6 H 7 I 8 J 9 K 10 L 11);
+tup!(A B 1 C 2 D 3 E 4 F 5 G 6 H 7 I 8 J 9 K 10 L 11 M 12);
+tup!(A B 1 C 2 D 3 E 4 F 5 G 6 H 7 I 8 J 9 K 10 L 11 M 12 N 13);
+tup!(A B 1 C 2 D 3 E 4 F 5 G 6 H 7 I 8 J 9 K 10 L 11 M 12 N 13 O 14);
+tup!(A B 1 C 2 D 3 E 4 F 5 G 6 H 7 I 8 J 9 K 10 L 11 M 12 N 13 O 14 P 15 );
+tup!(A B 1 C 2 D 3 E 4 F 5 G 6 H 7 I 8 J 9 K 10 L 11 M 12 N 13 O 14 P 15 Q 16);
+tup!(A B 1 C 2 D 3 E 4 F 5 G 6 H 7 I 8 J 9 K 10 L 11 M 12 N 13 O 14 P 15 Q 16 R 17);
+tup!(A B 1 C 2 D 3 E 4 F 5 G 6 H 7 I 8 J 9 K 10 L 11 M 12 N 13 O 14 P 15 Q 16 R 17 S 18);
+tup!(A B 1 C 2 D 3 E 4 F 5 G 6 H 7 I 8 J 9 K 10 L 11 M 12 N 13 O 14 P 15 Q 16 R 17 S 18 T 19);
+tup!(A B 1 C 2 D 3 E 4 F 5 G 6 H 7 I 8 J 9 K 10 L 11 M 12 N 13 O 14 P 15 Q 16 R 17 S 18 T 19 U 20);
 
 pub struct FParentheses<A>(A);
 impl<A: Any> Any for FParentheses<A> {
@@ -293,6 +368,8 @@ impl<A: Logical> Logical for FParentheses<A> {}
 impl<A: Reference> Reference for FParentheses<A> {}
 impl<A: Sequence> Sequence for FParentheses<A> {}
 impl<A: TextOrNumber> TextOrNumber for FParentheses<A> {}
+impl<A: Field> Field for FParentheses<A> {}
+impl<A: DateTimeParam> DateTimeParam for FParentheses<A> {}
 
 pub fn parentheses<A: Any>(a: A) -> FParentheses<A> {
     FParentheses(a)
@@ -312,6 +389,8 @@ macro_rules! value_number {
         impl Logical for $t {}
         impl Sequence for $t {}
         impl TextOrNumber for $t {}
+        impl Field for $t {}
+        impl DateTimeParam for $t {}
     };
 }
 
@@ -347,7 +426,7 @@ impl Any for &str {
                 if i > 0 {
                     buf.push_str("\"\"");
                 }
-                buf.push_str(self);
+                buf.push_str(s);
             }
             buf.push('"');
         } else {
@@ -360,6 +439,8 @@ impl Any for &str {
 impl Text for &str {}
 impl Sequence for &str {}
 impl TextOrNumber for &str {}
+impl Field for &str {}
+impl DateTimeParam for &str {}
 
 impl Any for String {
     fn formula(&self, buf: &mut String) {
@@ -369,7 +450,7 @@ impl Any for String {
                 if i > 0 {
                     buf.push_str("\"\"");
                 }
-                buf.push_str(self);
+                buf.push_str(s);
             }
             buf.push('"');
         } else {
@@ -382,6 +463,8 @@ impl Any for String {
 impl Text for String {}
 impl Sequence for String {}
 impl TextOrNumber for String {}
+impl Field for String {}
+impl DateTimeParam for String {}
 
 impl Any for CellRef {
     fn formula(&self, buf: &mut String) {
@@ -394,6 +477,8 @@ impl Text for CellRef {}
 impl Logical for CellRef {}
 impl Sequence for CellRef {}
 impl TextOrNumber for CellRef {}
+impl Field for CellRef {}
+impl DateTimeParam for CellRef {}
 
 impl Any for CellRange {
     fn formula(&self, buf: &mut String) {
@@ -406,6 +491,8 @@ impl Text for CellRange {}
 impl Logical for CellRange {}
 impl Sequence for CellRange {}
 impl TextOrNumber for CellRange {}
+impl Field for CellRange {}
+impl DateTimeParam for CellRange {}
 
 // -----------------------------------------------------------------------
 // -----------------------------------------------------------------------
@@ -413,16 +500,6 @@ impl TextOrNumber for CellRange {}
 pub fn add<'a, A: Number, B: Number>(a: A, b: B) -> FNumber {
     FNumber(infix(a, "+", b))
 }
-pub fn sub<'a, A: Number, B: Number>(a: A, b: B) -> FNumber {
-    FNumber(infix(a, "-", b))
-}
-pub fn mul<'a, A: Number, B: Number>(a: A, b: B) -> FNumber {
-    FNumber(infix(a, "*", b))
-}
-pub fn div<'a, A: Number, B: Number>(a: A, b: B) -> FNumber {
-    FNumber(infix(a, "/", b))
-}
-
 impl<'a, A: Number> Add<A> for FNumber {
     type Output = FNumber;
 
@@ -436,13 +513,141 @@ impl<'a, A: Number> Add<A> for FNumber {
 impl<A: Number> Add<A> for FParentheses<A> {
     type Output = FNumber;
 
-    fn add(mut self, rhs: A) -> Self::Output {
+    fn add(self, rhs: A) -> Self::Output {
         FNumber(infix(self, "+", rhs))
+    }
+}
+
+pub fn sub<'a, A: Number, B: Number>(a: A, b: B) -> FNumber {
+    FNumber(infix(a, "-", b))
+}
+impl<'a, A: Number> Sub<A> for FNumber {
+    type Output = FNumber;
+
+    fn sub(mut self, rhs: A) -> Self::Output {
+        let buf = &mut self.0;
+        buf.push('-');
+        let _ = rhs.formula(buf);
+        self
+    }
+}
+impl<A: Number> Sub<A> for FParentheses<A> {
+    type Output = FNumber;
+
+    fn sub(self, rhs: A) -> Self::Output {
+        FNumber(infix(self, "-", rhs))
+    }
+}
+
+pub fn mul<'a, A: Number, B: Number>(a: A, b: B) -> FNumber {
+    FNumber(infix(a, "*", b))
+}
+impl<'a, A: Number> Mul<A> for FNumber {
+    type Output = FNumber;
+
+    fn mul(mut self, rhs: A) -> Self::Output {
+        let buf = &mut self.0;
+        buf.push('*');
+        let _ = rhs.formula(buf);
+        self
+    }
+}
+impl<A: Number> Mul<A> for FParentheses<A> {
+    type Output = FNumber;
+
+    fn mul(self, rhs: A) -> Self::Output {
+        FNumber(infix(self, "*", rhs))
+    }
+}
+
+pub fn div<'a, A: Number, B: Number>(a: A, b: B) -> FNumber {
+    FNumber(infix(a, "/", b))
+}
+impl<'a, A: Number> Div<A> for FNumber {
+    type Output = FNumber;
+
+    fn div(mut self, rhs: A) -> Self::Output {
+        let buf = &mut self.0;
+        buf.push('/');
+        let _ = rhs.formula(buf);
+        self
+    }
+}
+impl<A: Number> Div<A> for FParentheses<A> {
+    type Output = FNumber;
+
+    fn div(self, rhs: A) -> Self::Output {
+        FNumber(infix(self, "/", rhs))
+    }
+}
+
+pub fn pow<'a, A: Number, B: Number>(a: A, b: B) -> FNumber {
+    FNumber(infix(a, "^", b))
+}
+impl<'a, A: Number> BitXor<A> for FNumber {
+    type Output = FNumber;
+
+    fn bitxor(mut self, rhs: A) -> Self::Output {
+        let buf = &mut self.0;
+        buf.push('^');
+        let _ = rhs.formula(buf);
+        self
+    }
+}
+impl<A: Number> BitXor<A> for FParentheses<A> {
+    type Output = FNumber;
+
+    fn bitxor(self, rhs: A) -> Self::Output {
+        FNumber(infix(self, "^", rhs))
+    }
+}
+
+pub fn neg<'a, A: Number>(a: A) -> FNumber {
+    FNumber(prefix("-", a))
+}
+impl Neg for FNumber {
+    type Output = FNumber;
+
+    fn neg(mut self) -> Self::Output {
+        let buf = &mut self.0;
+        buf.insert(0, '-');
+        self
+    }
+}
+impl<A: Number> Neg for FParentheses<A> {
+    type Output = FNumber;
+
+    fn neg(self) -> Self::Output {
+        FNumber(prefix("-", self.0))
     }
 }
 
 pub fn eq<'a, A: Any, B: Any>(a: A, b: B) -> FLogical {
     FLogical(infix(a, "=", b))
+}
+
+pub fn ne<'a, A: Any, B: Any>(a: A, b: B) -> FLogical {
+    FLogical(infix(a, "<>", b))
+}
+
+pub fn lt<'a, A: Any, B: Any>(a: A, b: B) -> FLogical {
+    FLogical(infix(a, "<", b))
+}
+
+pub fn le<'a, A: Any, B: Any>(a: A, b: B) -> FLogical {
+    FLogical(infix(a, "<=", b))
+}
+
+pub fn gt<'a, A: Any, B: Any>(a: A, b: B) -> FLogical {
+    FLogical(infix(a, ">", b))
+}
+
+pub fn ge<'a, A: Any, B: Any>(a: A, b: B) -> FLogical {
+    FLogical(infix(a, ">=", b))
+}
+
+pub fn percent<'a, A: Number>(a: A) -> FNumber {
+    FNumber(postfix(a, "%"))
 }
 
 pub fn concat<'a, A: Text, B: Text>(a: A, b: B) -> FText {
@@ -469,14 +674,6 @@ pub fn refcat<'a, A: Reference, B: Reference>(a: A, b: B) -> FReference {
 
 // -----------------------------------------------------------------------
 // -----------------------------------------------------------------------
-
-pub fn date<'a, D: Number, M: Number, Y: Number>(day: D, month: M, year: Y) -> FNumber {
-    FNumber(func("DATE", &[&day, &month, &year]))
-}
-
-pub fn date_value<'a, A: Text>(a: A) -> FNumber {
-    FNumber(func("DATEVALUE", &[&a]))
-}
 
 pub fn count<'a, A: Number>(a: A) -> FNumber {
     FNumber(func("COUNT", &[&a]))
