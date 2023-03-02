@@ -1,5 +1,5 @@
 use spreadsheet_ods::{CellRange, CellRef};
-use std::fmt::Write;
+use std::fmt::{Display, Formatter, Write};
 use std::ops::{Add, BitAnd, BitXor, Div, Mul, Neg, Sub};
 
 pub mod bitop;
@@ -7,6 +7,7 @@ pub mod complex;
 pub mod database;
 pub mod date;
 pub mod extaccess;
+pub mod information;
 pub mod matrix;
 
 /// The traits for this crate.
@@ -54,9 +55,21 @@ pub trait Reference: Any {
     }
 }
 /// A matrix or array as parameter.
-pub trait Matrix: Any {}
+pub trait Matrix: Any {
+    fn m(&self) -> FMatrix {
+        let mut buf = String::new();
+        let _ = self.formula(&mut buf);
+        FMatrix(buf)
+    }
+}
 /// A filter/search criterion
-pub trait Criterion: Any {}
+pub trait Criterion: Any {
+    fn c(&self) -> FCriterion {
+        let mut buf = String::new();
+        let _ = self.formula(&mut buf);
+        FCriterion(buf)
+    }
+}
 /// A sequence of values.
 pub trait Sequence: Any {}
 /// Text or a number.
@@ -259,50 +272,56 @@ impl Field for FReference {}
 impl DateTimeParam for FReference {}
 
 /// Filter criteria.
-pub enum FCriterion<F> {
-    V(F),
-    Eq(F),
-    Ne(F),
-    Lt(F),
-    Gt(F),
-    LtEq(F),
-    GtEq(F),
+pub enum CriterionCmp {
+    Cmp,
+    Eq,
+    Ne,
+    Lt,
+    Gt,
+    LtEq,
+    GtEq,
 }
 
-impl<F: Any> Any for FCriterion<F> {
-    fn formula(&self, buf: &mut String) {
+impl Display for CriterionCmp {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            FCriterion::V(f) => {
-                f.formula(buf);
-            }
-            FCriterion::Eq(f) => {
-                buf.push_str("\"=\"&");
-                f.formula(buf);
-            }
-            FCriterion::Ne(f) => {
-                buf.push_str("\"<>\"&");
-                f.formula(buf);
-            }
-            FCriterion::Lt(f) => {
-                buf.push_str("\"<\"&");
-                f.formula(buf);
-            }
-            FCriterion::Gt(f) => {
-                buf.push_str("\">\"&");
-                f.formula(buf);
-            }
-            FCriterion::LtEq(f) => {
-                buf.push_str("\"<=\"&");
-                f.formula(buf);
-            }
-            FCriterion::GtEq(f) => {
-                buf.push_str("\">=\"&");
-                f.formula(buf);
-            }
+            CriterionCmp::V => write!(f, ""),
+            CriterionCmp::Eq => write!(f, "="),
+            CriterionCmp::Ne => write!(f, "<>"),
+            CriterionCmp::Lt => write!(f, "<"),
+            CriterionCmp::Gt => write!(f, ">"),
+            CriterionCmp::LtEq => write!(f, "<="),
+            CriterionCmp::GtEq => write!(f, ">="),
         }
     }
 }
-impl<F: Any> Criterion for FCriterion<F> {}
+
+/// Filter/search
+pub struct FCriterion(String);
+impl FCriterion {
+    pub fn new<T: Any>(op: CriterionCmp, f: T) -> Self {
+        let mut buf = String::new();
+        (op, f).formula(&mut buf);
+        Self(buf)
+    }
+}
+
+impl Any for FCriterion {
+    fn formula(&self, buf: &mut String) {
+        buf.push_str(f.as_str());
+    }
+}
+impl Criterion for FCriterion {}
+
+impl<A: Any> Any for (CriterionCmp, A) {
+    fn formula(&self, buf: &mut String) {
+        let mut buf = String::new();
+        let _ = write!(buf, "\"{}\"", op);
+        buf.push('&');
+        f.formula(&mut buf);
+    }
+}
+impl<A: Any> Criterion for (CriterionCmp, A) {}
 
 // -----------------------------------------------------------------------
 // -----------------------------------------------------------------------
