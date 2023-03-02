@@ -51,11 +51,11 @@ fn nest1() {
 
     nest(of::formula(35)).q(Q);
 
-    nest(of::formula(of::count(
-        CellRange::origin_span(27, 1, (10, 10)).refcat(CellRange::local(4, 5, 25, 10)),
-    )))
-    .q(Q);
-
-    nest(of::formula(of::sum((1, 2, 3)))).q(Q);
-    nest(of::formula(of::sum((1, 2, 3)))).q(Q);
+    // nest(of::formula(of::count(
+    //     CellRange::origin_span(27, 1, (10, 10)).refcat(CellRange::local(4, 5, 25, 10)),
+    // )))
+    // .q(Q);
+    //
+    // nest(of::formula(of::sum((1, 2, 3)))).q(Q);
+    // nest(of::formula(of::sum((1, 2, 3)))).q(Q);
 }

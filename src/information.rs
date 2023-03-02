@@ -85,7 +85,7 @@ pub fn countif<S: Sequence, C: Criterion>(seq: S, criterion: C) -> FNumber {
 
 pub fn countifs(list: &[(FReference, FCriterion)]) -> FNumber {
     let mut buf = String::new();
-    buf.push_str(name);
+    buf.push_str("COUNTIFS");
     buf.push('(');
     for (i, (r, c)) in list.iter().enumerate() {
         if i > 0 {
@@ -210,15 +210,15 @@ pub fn numbervalue<T: Text, T2: Text, T3: Text>(
 ) -> FNumber {
     if let Some(dec_sep) = dec_sep {
         if let Some(group_sep) = group_sep {
-            FNumber(func("NUMBERVALUE", &[text, dec_sep, group_sep]))
+            FNumber(func("NUMBERVALUE", &[&text, &dec_sep, &group_sep]))
         } else {
-            FNumber(func("NUMBERVALUE", &[text, dec_sep]))
+            FNumber(func("NUMBERVALUE", &[&text, &dec_sep]))
         }
     } else {
         if let Some(group_sep) = group_sep {
-            FNumber(func("NUMBERVALUE", &[text, &(), group_sep]))
+            FNumber(func("NUMBERVALUE", &[&text, &(), &group_sep]))
         } else {
-            FNumber(func("NUMBERVALUE", &[text]))
+            FNumber(func("NUMBERVALUE", &[&text]))
         }
     }
 }

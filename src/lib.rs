@@ -32,44 +32,32 @@ pub trait Number: Any {
 }
 /// A text-like parameter.
 pub trait Text: Any {
-    fn t(&self) -> FText {
-        let mut buf = String::new();
-        let _ = self.formula(&mut buf);
-        FText(buf)
-    }
+    // fn t(&self) -> FText {
+    //     let mut buf = String::new();
+    //     let _ = self.formula(&mut buf);
+    //     FText(buf)
+    // }
 }
 /// A logical parameter.
 pub trait Logical: Any {
-    fn b(&self) -> FLogical {
-        let mut buf = String::new();
-        let _ = self.formula(&mut buf);
-        FLogical(buf)
-    }
+    // fn b(&self) -> FLogical {
+    //     let mut buf = String::new();
+    //     let _ = self.formula(&mut buf);
+    //     FLogical(buf)
+    // }
 }
 /// A reference-like parameter.
 pub trait Reference: Any {
-    fn r(&self) -> FReference {
-        let mut buf = String::new();
-        let _ = self.formula(&mut buf);
-        FReference(buf)
-    }
+    // fn r(&self) -> FReference {
+    //     let mut buf = String::new();
+    //     let _ = self.formula(&mut buf);
+    //     FReference(buf)
+    // }
 }
 /// A matrix or array as parameter.
-pub trait Matrix: Any {
-    fn m(&self) -> FMatrix {
-        let mut buf = String::new();
-        let _ = self.formula(&mut buf);
-        FMatrix(buf)
-    }
-}
+pub trait Matrix: Any {}
 /// A filter/search criterion
-pub trait Criterion: Any {
-    fn c(&self) -> FCriterion {
-        let mut buf = String::new();
-        let _ = self.formula(&mut buf);
-        FCriterion(buf)
-    }
-}
+pub trait Criterion: Any {}
 /// A sequence of values.
 pub trait Sequence: Any {}
 /// Text or a number.
@@ -285,7 +273,7 @@ pub enum CriterionCmp {
 impl Display for CriterionCmp {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            CriterionCmp::V => write!(f, ""),
+            CriterionCmp::Cmp => write!(f, ""),
             CriterionCmp::Eq => write!(f, "="),
             CriterionCmp::Ne => write!(f, "<>"),
             CriterionCmp::Lt => write!(f, "<"),
@@ -308,7 +296,7 @@ impl FCriterion {
 
 impl Any for FCriterion {
     fn formula(&self, buf: &mut String) {
-        buf.push_str(f.as_str());
+        buf.push_str(self.0.as_str());
     }
 }
 impl Criterion for FCriterion {}
@@ -316,9 +304,9 @@ impl Criterion for FCriterion {}
 impl<A: Any> Any for (CriterionCmp, A) {
     fn formula(&self, buf: &mut String) {
         let mut buf = String::new();
-        let _ = write!(buf, "\"{}\"", op);
+        let _ = write!(buf, "\"{}\"", self.0);
         buf.push('&');
-        f.formula(&mut buf);
+        self.1.formula(&mut buf);
     }
 }
 impl<A: Any> Criterion for (CriterionCmp, A) {}
@@ -411,6 +399,10 @@ impl<T: Any, const N: usize, const M: usize> Any for [[T; M]; N] {
 }
 impl<T: Number, const N: usize, const M: usize> Matrix for [[T; M]; N] {}
 impl<T: Any, const N: usize, const M: usize> Sequence for [[T; M]; N] {}
+
+impl Any for () {
+    fn formula(&self, _buf: &mut String) {}
+}
 
 macro_rules! tup {
     ( $tzero:ident $($tname:tt $tnum:tt)* ) => {
