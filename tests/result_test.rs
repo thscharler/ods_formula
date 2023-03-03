@@ -1,5 +1,5 @@
 use std::fmt;
-use std::fmt::{Debug, Display};
+use std::fmt::Debug;
 
 pub trait Report<Q> {
     fn report(self, q: Q);
@@ -23,16 +23,16 @@ pub struct ReportValues;
 
 impl<O, E> Report<ResultTest<O, E>> for ReportValues
 where
-    O: Display,
-    E: Display,
+    O: Debug,
+    E: Debug,
 {
     fn report(self, q: ResultTest<O, E>) {
         match (q.ok.as_ref(), q.err.as_ref()) {
             (Some(ok), None) => {
-                println!("{}", ok);
+                println!("{:?}", ok);
             }
             (None, Some(err)) => {
-                println!("{}", err);
+                println!("{:?}", err);
             }
             _ => unreachable!(),
         }
@@ -145,6 +145,6 @@ pub fn test(r: Result<String, fmt::Error>) -> ResultTest<String, fmt::Error> {
 
 #[allow(dead_code)]
 #[must_use]
-pub fn nest(r: String) -> ResultTest<String, fmt::Error> {
+pub fn test_ok<T: Debug>(r: T) -> ResultTest<T, ()> {
     ResultTest::new(Ok(r))
 }

@@ -2,13 +2,27 @@ use spreadsheet_ods::{CellRange, CellRef};
 use std::fmt::{Display, Formatter, Write};
 use std::ops::{Add, BitAnd, BitXor, Div, Mul, Neg, Sub};
 
-pub mod bitop;
-pub mod complex;
-pub mod database;
-pub mod date;
-pub mod extaccess;
-pub mod information;
-pub mod matrix;
+mod bitop;
+mod complex;
+mod database;
+mod date;
+mod extaccess;
+mod information;
+mod logical;
+mod lookup;
+mod math;
+mod matrix;
+
+pub use bitop::*;
+pub use complex::*;
+pub use database::*;
+pub use date::*;
+pub use extaccess::*;
+pub use information::*;
+pub use logical::*;
+pub use lookup::*;
+pub use math::*;
+pub use matrix::*;
 
 /// The traits for this crate.
 /// And the function p() for parentheses.
@@ -62,11 +76,15 @@ pub trait Criterion: Any {}
 pub trait Sequence: Any {}
 /// Text or a number.
 pub trait TextOrNumber: Any {}
+/// A single scalar value.
+pub trait Scalar: Any {}
 /// Field denominator for a database.
 pub trait Field: Any {}
 /// A date or time-like parameter.
 pub trait DateTimeParam: Any {}
 
+/// Alias for Matrix
+pub use Matrix as Array;
 /// Alias for a cell reference. A cell range containing headers and a data set.
 pub use Reference as Database;
 /// Alias for a cell reference. A cell range containing headers and filters.
@@ -109,7 +127,12 @@ pub trait TextOp<T> {
 }
 /// Operations on boolean-like values.
 pub trait LogicalOp<T> {
-    // TODO??
+    /// and
+    fn and<U: Logical>(&self, other: U) -> FLogical;
+    /// or
+    fn or<U: Logical>(&self, other: U) -> FLogical;
+    /// xor
+    fn xor<U: Logical>(&self, other: U) -> FLogical;
 }
 /// Operations on references.
 pub trait ReferenceOp<T> {
@@ -180,7 +203,19 @@ impl<T: Text> TextOp<T> for T {
     }
 }
 
-impl<T: Logical> LogicalOp<T> for T {}
+impl<T: Logical> LogicalOp<T> for T {
+    fn and<U: Logical>(&self, other: U) -> FLogical {
+        and((self, other))
+    }
+
+    fn or<U: Logical>(&self, other: U) -> FLogical {
+        or((self, other))
+    }
+
+    fn xor<U: Logical>(&self, other: U) -> FLogical {
+        xor((self, other))
+    }
+}
 
 impl<T: Reference> ReferenceOp<T> for T {
     fn intersect<U: Reference>(&self, other: U) -> FReference {
@@ -194,6 +229,23 @@ impl<T: Reference> ReferenceOp<T> for T {
 // -----------------------------------------------------------------------
 // -----------------------------------------------------------------------
 
+/// Any value.
+#[derive(Debug)]
+pub struct FAny(String);
+impl Any for FAny {
+    fn formula(&self, buf: &mut String) {
+        buf.push_str(self.0.as_ref());
+    }
+}
+impl Number for FAny {}
+impl Text for FAny {}
+impl Logical for FAny {}
+impl Sequence for FAny {}
+impl TextOrNumber for FAny {}
+impl Field for FAny {}
+impl Scalar for FAny {}
+impl DateTimeParam for FAny {}
+
 /// Number value.
 pub struct FNumber(String);
 impl Any for FNumber {
@@ -206,6 +258,7 @@ impl Logical for FNumber {}
 impl Sequence for FNumber {}
 impl TextOrNumber for FNumber {}
 impl Field for FNumber {}
+impl Scalar for FNumber {}
 impl DateTimeParam for FNumber {}
 
 /// Text value.
@@ -219,6 +272,7 @@ impl Text for FText {}
 impl Sequence for FText {}
 impl TextOrNumber for FText {}
 impl Field for FText {}
+impl Scalar for FText {}
 impl DateTimeParam for FText {}
 
 /// Logical value.
@@ -231,6 +285,7 @@ impl Any for FLogical {
 impl Logical for FLogical {}
 impl Number for FLogical {}
 impl Sequence for FLogical {}
+impl Scalar for FLogical {}
 impl TextOrNumber for FLogical {}
 
 /// Matrix value.
@@ -257,6 +312,7 @@ impl Matrix for FReference {}
 impl Sequence for FReference {}
 impl TextOrNumber for FReference {}
 impl Field for FReference {}
+impl Scalar for FReference {}
 impl DateTimeParam for FReference {}
 
 /// Filter criteria.
@@ -381,6 +437,24 @@ impl<T: TextOrNumber + Any + ?Sized> TextOrNumber for &T {}
 impl<T: Field + Any + ?Sized> Field for &T {}
 impl<T: DateTimeParam + Any + ?Sized> DateTimeParam for &T {}
 
+impl<T: Any + Sized> Any for Option<T> {
+    fn formula(&self, buf: &mut String) {
+        if let Some(v) = self {
+            v.formula(buf);
+        }
+    }
+}
+impl<T: Number + Any + Sized> Number for Option<T> {}
+impl<T: Text + Any + Sized> Text for Option<T> {}
+impl<T: Logical + Any + Sized> Logical for Option<T> {}
+impl<T: Reference + Any + Sized> Reference for Option<T> {}
+impl<T: Criterion + Any + Sized> Criterion for Option<T> {}
+impl<T: Sequence + Any + Sized> Sequence for Option<T> {}
+impl<T: Matrix + Any + Sized> Matrix for Option<T> {}
+impl<T: TextOrNumber + Any + Sized> TextOrNumber for Option<T> {}
+impl<T: Field + Any + Sized> Field for Option<T> {}
+impl<T: DateTimeParam + Any + Sized> DateTimeParam for Option<T> {}
+
 impl<T: Any, const N: usize, const M: usize> Any for [[T; M]; N] {
     fn formula(&self, buf: &mut String) {
         buf.push('{');
@@ -480,6 +554,7 @@ macro_rules! value_number {
         impl Sequence for $t {}
         impl TextOrNumber for $t {}
         impl Field for $t {}
+        impl Scalar for $t {}
         impl DateTimeParam for $t {}
     };
 }
@@ -506,6 +581,7 @@ impl Any for bool {
 }
 impl Logical for bool {}
 impl Number for bool {}
+impl Scalar for bool {}
 impl Sequence for bool {}
 
 impl Any for &str {
@@ -530,6 +606,7 @@ impl Text for &str {}
 impl Sequence for &str {}
 impl TextOrNumber for &str {}
 impl Field for &str {}
+impl Scalar for &str {}
 impl DateTimeParam for &str {}
 
 impl Any for String {
@@ -554,6 +631,7 @@ impl Text for String {}
 impl Sequence for String {}
 impl TextOrNumber for String {}
 impl Field for String {}
+impl Scalar for String {}
 impl DateTimeParam for String {}
 
 impl Any for CellRef {
@@ -568,6 +646,7 @@ impl Logical for CellRef {}
 impl Sequence for CellRef {}
 impl TextOrNumber for CellRef {}
 impl Field for CellRef {}
+impl Scalar for CellRef {}
 impl DateTimeParam for CellRef {}
 
 impl Any for CellRange {
@@ -582,6 +661,7 @@ impl Logical for CellRange {}
 impl Sequence for CellRange {}
 impl TextOrNumber for CellRange {}
 impl Field for CellRange {}
+impl Scalar for CellRange {}
 impl DateTimeParam for CellRange {}
 
 // -----------------------------------------------------------------------
