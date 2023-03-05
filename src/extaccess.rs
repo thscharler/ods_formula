@@ -13,10 +13,12 @@ impl Any for DDEConversion {
     }
 }
 
-pub fn dde<S: Text, T: Text, I: Text>(
-    server: S,
-    topic: T,
-    item: I,
+///  Returns data from a DDE request.
+#[inline]
+pub fn dde(
+    server: impl Text,
+    topic: impl Text,
+    item: impl Text,
     mode: Option<DDEConversion>,
 ) -> FNumber {
     if let Some(mode) = mode {
@@ -26,10 +28,14 @@ pub fn dde<S: Text, T: Text, I: Text>(
     }
 }
 
-pub fn dde_text<S: Text, T: Text, I: Text>(server: S, topic: T, item: I) -> FNumber {
+///  Returns data from a DDE request.
+#[inline]
+pub fn dde_text(server: impl Text, topic: impl Text, item: impl Text) -> FNumber {
     FNumber(func("DDE", &[&server, &topic, &item, &"2"]))
 }
 
-pub fn hyperlink<T: Text, F: Any>(iri: T, fun: F) -> FText {
+/// Creation of a hyperlink involving an evaluated expression.
+#[inline]
+pub fn hyperlink(iri: impl Text, fun: impl Any) -> FText {
     FText(func("HYPERLINK", &[&iri, &fun]))
 }

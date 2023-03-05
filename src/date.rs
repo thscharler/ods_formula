@@ -1,15 +1,24 @@
 use crate::{func, Any, DateTimeParam, FNumber, Number, Sequence, Text};
 
-pub fn date<D: Number, M: Number, Y: Number>(day: D, month: M, year: Y) -> FNumber {
+/// Constructs a date from year, month, and day of month.
+#[inline]
+pub fn date(day: impl Number, month: impl Number, year: impl Number) -> FNumber {
     FNumber(func("DATE", &[&day, &month, &year]))
 }
 
+/// Method for DATEDIF()
 pub enum DateDifMethod {
+    /// Years
     Years,
+    /// Months
     Months,
+    /// Days
     Days,
+    /// Days, ignoring months and years.
     DaysIgnoreMonthsYears,
+    /// Months, ignoring years.
     MonthsIgnoreYears,
+    /// Days, ignoring years.
     DaysIgnoreYears,
 }
 impl Any for DateDifMethod {
@@ -25,78 +34,103 @@ impl Any for DateDifMethod {
     }
 }
 
-pub fn datedif<D: DateTimeParam, D2: DateTimeParam>(
-    start_date: D,
-    end_date: D2,
+/// Returns the difference in years, months, or days of two date numbers.
+#[inline]
+pub fn datedif(
+    start_date: impl DateTimeParam,
+    end_date: impl DateTimeParam,
     format: DateDifMethod,
 ) -> FNumber {
     FNumber(func("DATEDIF", &[&start_date, &end_date, &format]))
 }
 
-pub fn date_value<'a, T: Text>(txt: T) -> FNumber {
+/// Returns the date serial number from given text.
+#[inline]
+pub fn date_value(txt: impl Text) -> FNumber {
     FNumber(func("DATEVALUE", &[&txt]))
 }
 
-pub fn day<D: DateTimeParam>(date: D) -> FNumber {
+/// Returns the day from a date.
+#[inline]
+pub fn day(date: impl DateTimeParam) -> FNumber {
     FNumber(func("DAY", &[&date]))
 }
 
-pub fn days<D: DateTimeParam, D2: DateTimeParam>(end_date: D, start_date: D2) -> FNumber {
+/// Returns the number of days between two dates
+#[inline]
+pub fn days(end_date: impl DateTimeParam, start_date: impl DateTimeParam) -> FNumber {
     FNumber(func("DAYS", &[&end_date, &start_date]))
 }
 
+/// Method for DAYS360()
 pub enum Days360Method {
-    NASD,
-    US,
+    /// NASD Method
+    USNasd,
+    /// European Method
     Europe,
 }
 impl Any for Days360Method {
     fn formula(&self, buf: &mut String) {
         match self {
-            Days360Method::NASD => buf.push_str("FALSE()"),
-            Days360Method::US => buf.push_str("FALSE()"),
+            Days360Method::USNasd => buf.push_str("FALSE()"),
             Days360Method::Europe => buf.push_str("TRUE()"),
         }
     }
 }
 
-pub fn days360<D: DateTimeParam, D2: DateTimeParam>(
-    start_date: D,
-    end_date: D2,
+/// Returns the number of days between two dates using the 360-day year
+#[inline]
+pub fn days360(
+    start_date: impl DateTimeParam,
+    end_date: impl DateTimeParam,
     method: Days360Method,
 ) -> FNumber {
     FNumber(func("DAYS360", &[&start_date, &end_date, &method]))
 }
 
-pub fn edate<D: DateTimeParam, N: Number>(start_date: D, month_add: N) -> FNumber {
+/// Returns the serial number of a given date when MonthAdd months is added
+#[inline]
+pub fn edate(start_date: impl DateTimeParam, month_add: impl Number) -> FNumber {
     FNumber(func("EDATE", &[&start_date, &month_add]))
 }
 
-pub fn eomonth<D: DateTimeParam, N: Number>(start_date: D, month_add: N) -> FNumber {
+/// Returns the serial number of the end of a month, given date plus MonthAdd months
+#[inline]
+pub fn eomonth(start_date: impl DateTimeParam, month_add: impl Number) -> FNumber {
     FNumber(func("EOMONTH", &[&start_date, &month_add]))
 }
 
-pub fn hour<T: DateTimeParam>(time: T) -> FNumber {
+/// Extracts the hour (0 through 23) from a time.
+#[inline]
+pub fn hour(time: impl DateTimeParam) -> FNumber {
     FNumber(func("HOUR", &[&time]))
 }
 
-pub fn isoweeknum<D: DateTimeParam>(date: D) -> FNumber {
+/// Determines the ISO week number of the year for a given date
+#[inline]
+pub fn isoweeknum(date: impl DateTimeParam) -> FNumber {
     FNumber(func("ISOWEEKNUM", &[&date]))
 }
 
-pub fn minute<T: DateTimeParam>(time: T) -> FNumber {
+/// Extracts the minute (0 through 59) from a time
+#[inline]
+pub fn minute(time: impl DateTimeParam) -> FNumber {
     FNumber(func("MINUTE", &[&time]))
 }
 
-pub fn month<D: DateTimeParam>(date: D) -> FNumber {
+/// Extracts the month from a date.
+#[inline]
+pub fn month(date: impl DateTimeParam) -> FNumber {
     FNumber(func("MONTH", &[&date]))
 }
 
-pub fn networkdays<D: DateTimeParam, D2: DateTimeParam, DS: Sequence, LS: Sequence>(
-    start_date: D,
-    end_date: D2,
-    holidays: DS,
-    workdays: LS,
+/// Returns the whole number of work days between two dates.
+#[inline]
+pub fn networkdays(
+    start_date: impl DateTimeParam,
+    end_date: impl DateTimeParam,
+    holidays: impl Sequence,
+    workdays: impl Sequence,
 ) -> FNumber {
     FNumber(func(
         "NETWORKDAYS",
@@ -104,34 +138,54 @@ pub fn networkdays<D: DateTimeParam, D2: DateTimeParam, DS: Sequence, LS: Sequen
     ))
 }
 
+/// Returns the serial number of the current date and time.
+#[inline]
 pub fn now() -> FNumber {
     FNumber(func("NOW", &[]))
 }
 
-pub fn second<T: DateTimeParam>(time: T) -> FNumber {
+/// Extracts the second (the integer 0 through 59) from a time. This function presumes
+/// that leap seconds never exist.
+#[inline]
+pub fn second(time: impl DateTimeParam) -> FNumber {
     FNumber(func("SECOND", &[&time]))
 }
 
-pub fn time<H: Number, M: Number, S: Number>(hours: H, minutes: M, seconds: S) -> FNumber {
+/// Constructs a time value from hours, minutes, and seconds.
+#[inline]
+pub fn time(hours: impl Number, minutes: impl Number, seconds: impl Number) -> FNumber {
     FNumber(func("TIME", &[&hours, &minutes, &seconds]))
 }
 
-pub fn timevalue<T: Text>(text: T) -> FNumber {
+/// Returns a time serial number from given text
+#[inline]
+pub fn timevalue(text: impl Text) -> FNumber {
     FNumber(func("TIMEVALUE", &[&text]))
 }
 
+/// Returns the serial number of today.
+#[inline]
 pub fn today() -> FNumber {
     FNumber(func("TODAY", &[]))
 }
 
+/// Method for WEEKDAY()
 pub enum WeekdayMethod {
+    /// Monday first, value 0.
     Monday0,
+    /// Monday first, value 1.
     Monday1,
+    /// Tuesday first, value 1.
     Tuesday1,
+    /// Wednesday first, value 1.
     Wednesday1,
+    /// Thursday first, value 1.
     Thursday1,
+    /// Friday first, value 1.
     Friday1,
+    /// Saturday first, value 1.
     Saturday1,
+    /// Sunday first, value 1.
     Sunday1,
 }
 impl Any for WeekdayMethod {
@@ -149,18 +203,30 @@ impl Any for WeekdayMethod {
     }
 }
 
-pub fn weekday<D: DateTimeParam>(date: D, method: WeekdayMethod) -> FNumber {
+/// Extracts the day of the week from a date; if text, uses current locale to convert to a
+/// date.
+#[inline]
+pub fn weekday(date: impl DateTimeParam, method: WeekdayMethod) -> FNumber {
     FNumber(func("WEEKDAY", &[&date, &method]))
 }
 
+/// Method for WEEKNUM()
 pub enum WeeknumMethod {
+    /// First week contains Jan 1, week starts on Monday.
     Jan1WeekMonday,
+    /// First week contains Jan 1, week starts on Tuesday.
     Jan1WeekTuesday,
+    /// First week contains Jan 1, week starts on Wednesday.
     Jan1WeekWednesday,
+    /// First week contains Jan 1, week starts on Thursday.
     Jan1WeekThursday,
+    /// First week contains Jan 1, week starts on Friday.
     Jan1WeekFriday,
+    /// First week contains Jan 1, week starts on Saturday.
     Jan1WeekSaturday,
+    /// First week contains Jan 1, week starts on Sunday.
     Jan1WeekSunday,
+    /// ISO week number.
     ISOWeeknum,
 }
 impl Any for WeeknumMethod {
@@ -178,28 +244,41 @@ impl Any for WeeknumMethod {
     }
 }
 
-pub fn weeknum<D: DateTimeParam>(date: D, method: WeeknumMethod) -> FNumber {
+/// Determines the week number of the year for a given date.
+#[inline]
+pub fn weeknum(date: impl DateTimeParam, method: WeeknumMethod) -> FNumber {
     FNumber(func("WEEKNUM", &[&date, &method]))
 }
 
-pub fn workday<D: DateTimeParam, N: Number, DS: Sequence, LS: Sequence>(
-    date: D,
-    offset: N,
-    holidays: DS,
-    workdays: LS,
+/// Returns the date serial number which is a specified number of work days before or
+/// after an input date.
+#[inline]
+pub fn workday(
+    date: impl DateTimeParam,
+    offset: impl Number,
+    holidays: impl Sequence,
+    workdays: impl Sequence,
 ) -> FNumber {
     FNumber(func("WORKDAY", &[&date, &offset, &holidays, &workdays]))
 }
 
-pub fn year<D: DateTimeParam>(date: D) -> FNumber {
+/// Extracts the year from a date given in the current locale of the evaluator.
+#[inline]
+pub fn year(date: impl DateTimeParam) -> FNumber {
     FNumber(func("YEAR", &[&date]))
 }
 
+/// Method for YEARFRAC()
 pub enum YearFracMethod {
+    ///
     USNasd30_360,
+    ///
     ActualActual,
+    ///
     Actual360,
+    ///
     Actual365,
+    ///
     European30_360,
 }
 impl Any for YearFracMethod {
@@ -214,9 +293,11 @@ impl Any for YearFracMethod {
     }
 }
 
-pub fn yearfrac<D: DateTimeParam, D2: DateTimeParam>(
-    start_date: D,
-    end_date: D2,
+/// Extracts the number of years (including fractional part) between two dates
+#[inline]
+pub fn yearfrac(
+    start_date: impl DateTimeParam,
+    end_date: impl DateTimeParam,
     basis: Option<YearFracMethod>,
 ) -> FNumber {
     if let Some(basis) = basis {

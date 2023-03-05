@@ -63,3 +63,17 @@ TextOrNumber
                         Reference
 
 
+--
+
+FAny
+    Any
+    Number
+    Text
+    Logical
+    Sequence
+    TextOrNumber
+    Field
+    Scalar
+    DateTimeParam
+
+

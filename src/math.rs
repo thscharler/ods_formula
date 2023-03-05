@@ -1,73 +1,104 @@
 use crate::{func, FNumber, Number};
 use std::fmt::{Display, Formatter};
 
+/// Return the absolute (nonnegative) value.
+#[inline]
 pub fn abs(n: impl Number) -> FNumber {
     FNumber(func("ABS", &[&n]))
 }
 
+/// Returns the principal value of the arc cosine of a number. The angle is returned in
+/// radians.
+#[inline]
 pub fn acos(n: impl Number) -> FNumber {
     FNumber(func("ACOS", &[&n]))
 }
 
+/// Return the principal value of the inverse hyperbolic cosine.
+#[inline]
 pub fn acosh(n: impl Number) -> FNumber {
     FNumber(func("ACOSH", &[&n]))
 }
 
+/// Return the principal value of the arc cotangent of a number. The angle is returned in
+/// radians.
+#[inline]
 pub fn acot(n: impl Number) -> FNumber {
     FNumber(func("ACOT", &[&n]))
 }
 
+/// Return the hyperbolic arc cotangent
+#[inline]
 pub fn acoth(n: impl Number) -> FNumber {
     FNumber(func("ACOTH", &[&n]))
 }
 
+/// Return the principal value of the arc sine of a number. The angle is returned in
+/// radians.
+#[inline]
 pub fn asin(n: impl Number) -> FNumber {
     FNumber(func("ASIN", &[&n]))
 }
 
+///  Return the principal value of the inverse hyperbolic sine
+#[inline]
 pub fn asinh(n: impl Number) -> FNumber {
     FNumber(func("ASINH", &[&n]))
 }
 
+/// Return the principal value of the arc tangent of a number. The angle is returned in
+/// radians.
+#[inline]
 pub fn atan(n: impl Number) -> FNumber {
     FNumber(func("ATAN", &[&n]))
 }
 
+/// Returns the principal value of the arc tangent given a coordinate of two numbers.
+/// The angle is returned in radians.
+#[inline]
 pub fn atan2(x: impl Number, y: impl Number) -> FNumber {
     FNumber(func("ATAN2", &[&x, &y]))
 }
 
+/// Return the principal value of the inverse hyperbolic tangent
+#[inline]
 pub fn atanh(n: impl Number) -> FNumber {
     FNumber(func("ATANH", &[&n]))
 }
 
 /// Returns the modified Bessel function of integer order In(X).
+#[inline]
 pub fn besseli(x: impl Number, n: impl Number) -> FNumber {
     FNumber(func("BESSELI", &[&x, &n]))
 }
 
 /// Returns the Bessel function of integer order Jn(X) (cylinder function)
+#[inline]
 pub fn besselj(x: impl Number, n: impl Number) -> FNumber {
     FNumber(func("BESSELJ", &[&x, &n]))
 }
 
 /// Returns the modified Bessel function of integer order Kn(x)
+#[inline]
 pub fn besselk(x: impl Number, n: impl Number) -> FNumber {
     FNumber(func("BESSELK", &[&x, &n]))
 }
 
 /// Returns the Bessel function of integer order Yn(X), also known as the Neumann
 /// function.
+#[inline]
 pub fn bessely(x: impl Number, n: impl Number) -> FNumber {
     FNumber(func("BESSELY", &[&x, &n]))
 }
 
 /// Returns the number of different R-length sets that can be selected from N items.
+#[inline]
 pub fn combin(n: impl Number, r: impl Number) -> FNumber {
     FNumber(func("COMBIN", &[&n, &r]))
 }
 
 /// Returns the number of combinations with repetitions.
+#[inline]
 pub fn combina(n: impl Number, m: impl Number) -> FNumber {
     FNumber(func("COMBINA", &[&n, &m]))
 }
@@ -378,6 +409,17 @@ impl Display for ConvertUnit {
 }
 
 /// Returns a number converted from one unit system into another.
+#[inline]
 pub fn convert(n: impl Number, from: ConvertUnit, to: ConvertUnit) -> FNumber {
     FNumber(func("CONVERT", &[&n, &from.to_string(), &to.to_string()]))
+}
+
+#[inline]
+pub fn cos(n: impl Number) -> FNumber {
+    FNumber(func("COS", &[&n]))
+}
+
+#[inline]
+pub fn cosh(n: impl Number) -> FNumber {
+    FNumber(func("COSH", &[&n]))
 }

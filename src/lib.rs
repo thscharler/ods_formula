@@ -13,7 +13,7 @@ mod lookup;
 mod math;
 mod matrix;
 
-pub use bitop::*;
+pub use bitop::bitand;
 pub use complex::*;
 pub use database::*;
 pub use date::*;
@@ -28,8 +28,11 @@ pub use matrix::*;
 /// And the function p() for parentheses.
 pub mod prelude {
     pub use super::parentheses as p;
-    pub use super::{Any, Criterion, Logical, Number, Reference, Text};
-    pub use super::{LogicalOp, NumberOp, ReferenceOp, TextOp};
+    pub use super::{
+        Any, Criterion, DateTimeParam, Field, Logical, Matrix, Number, Reference, Scalar, Sequence,
+        Text, TextOrNumber,
+    };
+    pub use super::{AnyOp, LogicalOp, NumberOp, ReferenceOp, TextOp};
 }
 
 /// Base trait for output to a String.
@@ -38,6 +41,7 @@ pub trait Any {
 }
 /// A number-like parameter. This is also used for date, time etc.
 pub trait Number: Any {
+    /// Convert to FNumber.
     fn n(&self) -> FNumber {
         let mut buf = String::new();
         let _ = self.formula(&mut buf);
@@ -45,29 +49,11 @@ pub trait Number: Any {
     }
 }
 /// A text-like parameter.
-pub trait Text: Any {
-    // fn t(&self) -> FText {
-    //     let mut buf = String::new();
-    //     let _ = self.formula(&mut buf);
-    //     FText(buf)
-    // }
-}
+pub trait Text: Any {}
 /// A logical parameter.
-pub trait Logical: Any {
-    // fn b(&self) -> FLogical {
-    //     let mut buf = String::new();
-    //     let _ = self.formula(&mut buf);
-    //     FLogical(buf)
-    // }
-}
+pub trait Logical: Any {}
 /// A reference-like parameter.
-pub trait Reference: Any {
-    // fn r(&self) -> FReference {
-    //     let mut buf = String::new();
-    //     let _ = self.formula(&mut buf);
-    //     FReference(buf)
-    // }
-}
+pub trait Reference: Any {}
 /// A matrix or array as parameter.
 pub trait Matrix: Any {}
 /// A filter/search criterion
@@ -232,6 +218,11 @@ impl<T: Reference> ReferenceOp<T> for T {
 /// Any value.
 #[derive(Debug)]
 pub struct FAny(String);
+impl Display for FAny {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 impl Any for FAny {
     fn formula(&self, buf: &mut String) {
         buf.push_str(self.0.as_ref());
@@ -247,7 +238,13 @@ impl Scalar for FAny {}
 impl DateTimeParam for FAny {}
 
 /// Number value.
+#[derive(Debug)]
 pub struct FNumber(String);
+impl Display for FNumber {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 impl Any for FNumber {
     fn formula(&self, buf: &mut String) {
         buf.push_str(self.0.as_ref());
@@ -262,7 +259,13 @@ impl Scalar for FNumber {}
 impl DateTimeParam for FNumber {}
 
 /// Text value.
+#[derive(Debug)]
 pub struct FText(String);
+impl Display for FText {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 impl Any for FText {
     fn formula(&self, buf: &mut String) {
         buf.push_str(self.0.as_ref());
@@ -276,7 +279,13 @@ impl Scalar for FText {}
 impl DateTimeParam for FText {}
 
 /// Logical value.
+#[derive(Debug)]
 pub struct FLogical(String);
+impl Display for FLogical {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 impl Any for FLogical {
     fn formula(&self, buf: &mut String) {
         buf.push_str(self.0.as_ref());
@@ -289,7 +298,13 @@ impl Scalar for FLogical {}
 impl TextOrNumber for FLogical {}
 
 /// Matrix value.
+#[derive(Debug)]
 pub struct FMatrix(String);
+impl Display for FMatrix {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 impl Any for FMatrix {
     fn formula(&self, buf: &mut String) {
         buf.push_str(self.0.as_ref());
@@ -298,7 +313,13 @@ impl Any for FMatrix {
 impl Matrix for FMatrix {}
 
 /// Reference value.
+#[derive(Debug)]
 pub struct FReference(String);
+impl Display for FReference {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 impl Any for FReference {
     fn formula(&self, buf: &mut String) {
         buf.push_str(self.0.as_ref());
@@ -316,6 +337,7 @@ impl Scalar for FReference {}
 impl DateTimeParam for FReference {}
 
 /// Filter criteria.
+#[derive(Debug)]
 pub enum CriterionCmp {
     Cmp,
     Eq,
@@ -341,12 +363,19 @@ impl Display for CriterionCmp {
 }
 
 /// Filter/search
+#[derive(Debug)]
 pub struct FCriterion(String);
 impl FCriterion {
     pub fn new<T: Any>(op: CriterionCmp, f: T) -> Self {
         let mut buf = String::new();
         (op, f).formula(&mut buf);
         Self(buf)
+    }
+}
+
+impl Display for FCriterion {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 
@@ -359,10 +388,9 @@ impl Criterion for FCriterion {}
 
 impl<A: Any> Any for (CriterionCmp, A) {
     fn formula(&self, buf: &mut String) {
-        let mut buf = String::new();
         let _ = write!(buf, "\"{}\"", self.0);
         buf.push('&');
-        self.1.formula(&mut buf);
+        self.1.formula(buf);
     }
 }
 impl<A: Any> Criterion for (CriterionCmp, A) {}
@@ -469,14 +497,27 @@ impl<T: Any, const N: usize, const M: usize> Any for [[T; M]; N] {
                 c.formula(buf);
             }
         }
+        buf.push('}');
     }
 }
-impl<T: Number, const N: usize, const M: usize> Matrix for [[T; M]; N] {}
+impl<T: Any, const N: usize, const M: usize> Matrix for [[T; M]; N] {}
 impl<T: Any, const N: usize, const M: usize> Sequence for [[T; M]; N] {}
 
 impl Any for () {
     fn formula(&self, _buf: &mut String) {}
 }
+
+impl<T: Any> Any for Vec<T> {
+    fn formula(&self, buf: &mut String) {
+        for (i, v) in self.iter().enumerate() {
+            if i > 0 {
+                buf.push(';');
+            }
+            v.formula(buf);
+        }
+    }
+}
+impl<T: Any> Sequence for Vec<T> {}
 
 macro_rules! tup {
     ( $tzero:ident $($tname:tt $tnum:tt)* ) => {
@@ -860,3 +901,33 @@ pub fn refcat<'a, A: Reference, B: Reference>(a: A, b: B) -> FReference {
 
 // -----------------------------------------------------------------------
 // -----------------------------------------------------------------------
+
+#[macro_export]
+macro_rules! cell {
+    ($row:expr, $col:expr) => {
+        CellRef::local($row, $col)
+    };
+    ($table:expr => $row:expr, $col:expr) => {
+        CellRef::remote($table, $row, $col)
+    };
+}
+
+#[macro_export]
+macro_rules! range {
+    ($row:expr, $col:expr, $row_to:expr, $col_to:expr) => {
+        CellRange::local($row, $col, $row_to, $col_to)
+    };
+    ($row:expr, $col:expr; + $row_delta:expr, $col_delta:expr) => {
+        CellRange::origin_span($row, $col, ($row_delta, $col_delta))
+    };
+    ($table:expr => $row:expr, $col:expr, $row_to:expr, $col_to:expr) => {
+        CellRange::remote($table, $row, $col, $row_to, $col_to)
+    };
+    ($table:expr => $row:expr, $col:expr; + $row_delta:expr, $col_delta:expr) => {
+        CellRange::remote($table, $row, $col, $row + $row_delta, $col + $col_delta)
+    };
+}
+
+pub fn test0() {
+    let _ = cosh(99);
+}

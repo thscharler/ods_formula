@@ -3,6 +3,7 @@ use crate::{
 };
 
 /// Returns a cell address (reference) as text.
+#[inline]
 pub fn address(
     row: impl Number,
     col: impl Number,
@@ -25,6 +26,7 @@ pub fn address(
 }
 
 /// Returns a cell address (reference) as text.
+#[inline]
 pub fn address_rc(
     row: impl Number,
     col: impl Number,
@@ -47,11 +49,13 @@ pub fn address_rc(
 }
 
 ///  Uses an index to return a value from a list of values
+#[inline]
 pub fn choose(idx: impl Number, values: impl Sequence) -> FAny {
     FAny(func("CHOOSE", &[&idx, &values]))
 }
 
 /// Return a value from a data pilot table.
+#[inline]
 pub fn getpivotdata(
     datafield: impl Text,
     table: impl Reference,
@@ -80,6 +84,7 @@ pub fn getpivotdata(
 
 /// Look for a matching value in the first row of the given table, and return the value of the
 /// indicated row.
+#[inline]
 pub fn hlookup(
     lookup: impl Any,
     data_source: impl Array,
@@ -93,6 +98,7 @@ pub fn hlookup(
 }
 
 /// Returns a value using a row and column index value (and optionally an area index)
+#[inline]
 pub fn index(
     data_source: impl Array,
     row: Option<impl Number>,
@@ -103,27 +109,32 @@ pub fn index(
 }
 
 /// Return a reference given a string representation of a reference.
+#[inline]
 pub fn indirect(refs: impl Text) -> FReference {
     FReference(func("INDIRECT", &[&refs]))
 }
 
 /// Return a reference given a string representation of a reference.
+#[inline]
 pub fn indirect_rc(refs: impl Text) -> FReference {
     FReference(func("INDIRECT", &[&refs, &false]))
 }
 
 /// Look for criterion in an already-sorted array, and return a corresponding result.
+#[inline]
 pub fn lookup(find: impl Any, searched: impl Array, results: Option<impl Array>) -> FAny {
     FAny(func("LOOKUP", &[&find, &searched, &results]))
 }
 
 /// Finds a Search item in a sequence, and returns its position (starting from 1)
+#[inline]
 pub fn match_(search: impl Scalar, search_region: impl Array, match_type: impl Number) -> FAny {
     FAny(func("MATCH", &[&search, &search_region, &match_type]))
 }
 
 /// Executes a formula expression while substituting a row reference and a column
 /// reference.
+#[inline]
 pub fn multiple_operations(
     formula_cell: impl Reference,
     row_cell: impl Reference,
@@ -144,6 +155,7 @@ pub fn multiple_operations(
 }
 
 /// Modifies a reference's position and dimension.
+#[inline]
 pub fn offset(
     refs: impl Reference,
     row_offset: impl Number,
@@ -159,6 +171,7 @@ pub fn offset(
 
 /// Look for a matching value in the first column of the given table, and return the value of
 /// the indicated column.
+#[inline]
 pub fn vlookup(
     lookup: impl Any,
     data_source: impl Array,

@@ -1,21 +1,31 @@
 use crate::{func, FNumber, Number};
 
-pub fn bitand<X: Number, Y: Number>(x: X, y: Y) -> FNumber {
+/// Returns bitwise “and” of its parameters
+#[inline]
+pub fn bitand(x: impl Number, y: impl Number) -> FNumber {
     FNumber(func("BITAND", &[&x, &y]))
 }
 
-pub fn bitor<X: Number, Y: Number>(x: X, y: Y) -> FNumber {
+/// Returns bitwise “or” of its parameters
+#[inline]
+pub fn bitor(x: impl Number, y: impl Number) -> FNumber {
     FNumber(func("BITOR", &[&x, &y]))
 }
 
-pub fn bitxor<X: Number, Y: Number>(x: X, y: Y) -> FNumber {
+/// Returns bitwise “exclusive or” of its parameters
+#[inline]
+pub fn bitxor(x: impl Number, y: impl Number) -> FNumber {
     FNumber(func("BITXOR", &[&x, &y]))
 }
 
-pub fn bitlshift<X: Number, N: Number>(x: X, n: N) -> FNumber {
+/// Returns left shift of value X by N bits (“<<”)
+#[inline]
+pub fn bitlshift(x: impl Number, n: impl Number) -> FNumber {
     FNumber(func("BITLSHIFT", &[&x, &n]))
 }
 
-pub fn bitrshift<X: Number, N: Number>(x: X, n: N) -> FNumber {
+/// Returns right shift of value X by N bits (“>>”)
+#[inline]
+pub fn bitrshift(x: impl Number, n: impl Number) -> FNumber {
     FNumber(func("BITRSHIFT", &[&x, &n]))
 }

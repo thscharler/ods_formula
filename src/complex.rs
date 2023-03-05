@@ -1,105 +1,157 @@
 use crate::{func, FNumber, Number, Sequence};
 
-pub fn complex<R: Number, I: Number>(real: R, imag: I) -> FNumber {
+/// Creates a complex number from a given real coefficient and imaginary coefficient.
+#[inline]
+pub fn complex(real: impl Number, imag: impl Number) -> FNumber {
     FNumber(func("COMPLEX", &[&real, &imag]))
 }
 
-pub fn imabs<C: Number>(complex: C) -> FNumber {
+/// Returns the absolute value of a complex number.
+#[inline]
+pub fn imabs(complex: impl Number) -> FNumber {
     FNumber(func("IMABS", &[&complex]))
 }
 
-pub fn imaginary<C: Number>(complex: C) -> FNumber {
+///Returns the imaginary coefficient of a complex number.
+#[inline]
+pub fn imaginary(complex: impl Number) -> FNumber {
     FNumber(func("IMAGINARY", &[&complex]))
 }
 
-pub fn imargument<C: Number>(complex: C) -> FNumber {
+///Returns the complex argument of a complex number
+#[inline]
+pub fn imargument(complex: impl Number) -> FNumber {
     FNumber(func("IMARGUMENT", &[&complex]))
 }
 
-pub fn imconjugate<C: Number>(complex: C) -> FNumber {
+/// Returns the complex conjugate of a complex number.
+#[inline]
+pub fn imconjugate(complex: impl Number) -> FNumber {
     FNumber(func("IMCONJUGATE", &[&complex]))
 }
 
-pub fn imcos<C: Number>(complex: C) -> FNumber {
+/// Returns the cosine of a complex number.
+#[inline]
+pub fn imcos(complex: impl Number) -> FNumber {
     FNumber(func("IMCOS", &[&complex]))
 }
 
-pub fn imcosh<C: Number>(complex: C) -> FNumber {
+///Returns the hyperbolic cosine of a complex number.
+#[inline]
+pub fn imcosh(complex: impl Number) -> FNumber {
     FNumber(func("IMCOSH", &[&complex]))
 }
 
-pub fn imcot<C: Number>(complex: C) -> FNumber {
+///Returns the cotangent of a complex number.
+#[inline]
+pub fn imcot(complex: impl Number) -> FNumber {
     FNumber(func("IMCOT", &[&complex]))
 }
 
-pub fn imcsc<C: Number>(complex: C) -> FNumber {
+///Returns the cosecant of a complex number
+#[inline]
+pub fn imcsc(complex: impl Number) -> FNumber {
     FNumber(func("IMCSC", &[&complex]))
 }
 
-pub fn imcsch<C: Number>(complex: C) -> FNumber {
+///Returns the hyperbolic cosecant of a complex number.
+#[inline]
+pub fn imcsch(complex: impl Number) -> FNumber {
     FNumber(func("IMCSCH", &[&complex]))
 }
 
-pub fn imdiv<X: Number, Y: Number>(complex_x: X, complex_y: Y) -> FNumber {
+/// Divides the first number by the second.
+#[inline]
+pub fn imdiv(complex_x: impl Number, complex_y: impl Number) -> FNumber {
     FNumber(func("IMDIV", &[&complex_x, &complex_y]))
 }
 
-pub fn imexp<C: Number>(complex: C) -> FNumber {
+///Returns the exponent of e and a complex number.
+#[inline]
+pub fn imexp(complex: impl Number) -> FNumber {
     FNumber(func("IMEXP", &[&complex]))
 }
 
-pub fn imln<C: Number>(complex: C) -> FNumber {
+///Returns the natural logarithm of a complex number
+#[inline]
+pub fn imln(complex: impl Number) -> FNumber {
     FNumber(func("IMLN", &[&complex]))
 }
 
-pub fn imlog10<C: Number>(complex: C) -> FNumber {
+/// Returns the common logarithm of a comp
+#[inline]
+pub fn imlog10(complex: impl Number) -> FNumber {
     FNumber(func("IMLOG10", &[&complex]))
 }
 
-pub fn imlog2<C: Number>(complex: C) -> FNumber {
+///Returns the binary logarithm of a complex number.
+#[inline]
+pub fn imlog2(complex: impl Number) -> FNumber {
     FNumber(func("IMLOG2", &[&complex]))
 }
 
-pub fn impower<X: Number, Y: Number>(complex_x: X, complex_y: Y) -> FNumber {
+///Returns the complex number X raised to the Yth power.
+#[inline]
+pub fn impower(complex_x: impl Number, complex_y: impl Number) -> FNumber {
     FNumber(func("IMPOWER", &[&complex_x, &complex_y]))
 }
 
-pub fn improduct<X: Number, Y: Number>(complex_x: X, complex_y: Y) -> FNumber {
+///Returns the product of complex numbers.
+#[inline]
+pub fn improduct(complex_x: impl Number, complex_y: impl Number) -> FNumber {
     FNumber(func("IMPRODUCT", &[&complex_x, &complex_y]))
 }
 
-pub fn imreal<C: Number>(complex: C) -> FNumber {
+/// Returns the real coefficient of a complex number.
+#[inline]
+pub fn imreal(complex: impl Number) -> FNumber {
     FNumber(func("IMREAL", &[&complex]))
 }
 
-pub fn imsin<C: Number>(complex: C) -> FNumber {
+/// Returns the sine of a complex number.
+#[inline]
+pub fn imsin(complex: impl Number) -> FNumber {
     FNumber(func("IMSIN", &[&complex]))
 }
 
-pub fn imsinh<C: Number>(complex: C) -> FNumber {
+///Returns the hyperbolic sine of a comp
+#[inline]
+pub fn imsinh(complex: impl Number) -> FNumber {
     FNumber(func("IMSINH", &[&complex]))
 }
 
-pub fn imsec<C: Number>(complex: C) -> FNumber {
+///Returns the secant of a complex number.
+#[inline]
+pub fn imsec(complex: impl Number) -> FNumber {
     FNumber(func("IMSEC", &[&complex]))
 }
 
-pub fn imsech<C: Number>(complex: C) -> FNumber {
+///Returns the hyperbolic secant of a complex number.
+#[inline]
+pub fn imsech(complex: impl Number) -> FNumber {
     FNumber(func("IMSECH", &[&complex]))
 }
 
-pub fn imsqrt<C: Number>(complex: C) -> FNumber {
+/// Returns the square root of a complex number
+#[inline]
+pub fn imsqrt(complex: impl Number) -> FNumber {
     FNumber(func("IMSQRT", &[&complex]))
 }
 
-pub fn imsub<X: Number, Y: Number>(complex_x: X, complex_y: Y) -> FNumber {
+/// Subtracts the second complex number from the first
+#[inline]
+pub fn imsub(complex_x: impl Number, complex_y: impl Number) -> FNumber {
     FNumber(func("IMSUB", &[&complex_x, &complex_y]))
 }
 
-pub fn imsum<S: Sequence>(complex_sequence: S) -> FNumber {
+///Sums (add) a set of complex numbers, including all numbers in ranges.
+#[inline]
+pub fn imsum(complex_sequence: impl Sequence) -> FNumber {
     FNumber(func("IMSUM", &[&complex_sequence]))
 }
 
-pub fn imtan<C: Number>(complex: C) -> FNumber {
+///Returns the tangent of a complex number
+#[inline]
+pub fn imtan(complex: impl Number) -> FNumber {
     FNumber(func("IMTAN", &[&complex]))
 }
