@@ -1,6 +1,6 @@
 use crate::{
-    func, func1, func2, func3, func4, func5, Any, Array, FAny, FReference, FText, Logical, Number,
-    Param, Reference, Scalar, Sequence, Text,
+    create_param, func, func1, func2, func3, func4, func5, param_assume_init, Any, Array, FAny,
+    FReference, FText, Logical, Number, Param, Reference, Scalar, Sequence, Text,
 };
 
 pub enum AddressAbs {
@@ -82,13 +82,15 @@ pub fn getpivotdata_fields<F: Text, S: Scalar>(
     table: impl Reference,
     fields: &[(F, S)],
 ) -> FAny {
-    let mut param: Vec<&dyn Any> = Vec::new();
-    param.push(&datafield);
-    param.push(&table);
-    for (n, sc) in fields.iter() {
-        param.push(n);
-        param.push(sc);
+    let mut param = create_param(2 + fields.len() * 2);
+    param[0].write(&datafield);
+    param[1].write(&table);
+    for (i, (n, sc)) in fields.iter().enumerate() {
+        param[2 + 2 * i].write(n);
+        param[2 + 2 * i + 1].write(sc);
     }
+    let param = unsafe { param_assume_init(param) };
+
     FAny(func("GETPIVOTDATA", param.as_ref()))
 }
 

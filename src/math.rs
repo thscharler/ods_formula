@@ -1,9 +1,11 @@
 use crate::{
-    func, func0, func1, func2, func3, func4, Any, Array, Criterion, FNumber, Number, Param,
-    Reference, Sequence,
+    create_param, func, func0, func1, func2, func3, func4, param_assume_init, Any, Array,
+    Criterion, FNumber, Number, Param, Reference, Sequence,
 };
+use std::alloc;
 use std::borrow::Cow;
 use std::fmt::Write;
+use std::mem::MaybeUninit;
 
 /// Return the absolute (nonnegative) value.
 #[inline]
@@ -704,13 +706,15 @@ pub fn sumif2(range: impl Reference, criterion: impl Criterion, sum: impl Refere
 
 #[inline]
 pub fn sumifs(range: impl Reference, criterion: &[(impl Reference, impl Criterion)]) -> FNumber {
-    let mut param: Vec<&dyn Any> = Vec::new();
-    param.push(&range);
-    for (r, c) in criterion {
-        param.push(r);
-        param.push(c)
+    let mut param = create_param(criterion.len() * 2 + 1);
+    param[0].write(&range);
+    for (i, (r, c)) in criterion.iter().enumerate() {
+        param[1 + 2 * i].write(r);
+        param[1 + 2 * i + 1].write(c);
     }
-    FNumber(func("SUMIFS", param.as_slice()))
+    let param = unsafe { param_assume_init(param) };
+
+    FNumber(func("SUMIFS", param.as_ref()))
 }
 
 #[inline]

@@ -207,4 +207,17 @@ fn test_math() {
         [[9, 9, 9], [10, 10, 10]],
     ))))
     .q(Q);
+
+    test_ok(of::formula(of::sumif2(
+        range!(0, 0, 99, 99),
+        (CriterionCmp::Eq, 1001),
+        range!(101, 0, 199, 99),
+    )))
+    .q(Q);
+
+    test_ok(of::formula(of::sumifs(
+        range!(0, 0, 99, 99),
+        &[(range!(101, 0, 199, 99), (CriterionCmp::Eq, 1001))],
+    )))
+    .q(Q);
 }

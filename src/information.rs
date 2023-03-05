@@ -1,6 +1,6 @@
 use crate::{
-    func, func0, func1, func2, func3, Any, Criterion, FCriterion, FLogical, FNumber, FReference,
-    FText, Number, Reference, Sequence, Text,
+    create_param, func, func0, func1, func2, func3, param_assume_init, Any, Criterion, FCriterion,
+    FLogical, FNumber, FReference, FText, Number, Reference, Sequence, Text,
 };
 
 ///  Returns the number of areas in a given list of references.
@@ -126,11 +126,13 @@ pub fn countif(seq: impl Sequence, criterion: impl Criterion) -> FNumber {
 /// Count the number of cells that meet multiple criteria in multiple ranges.
 #[inline]
 pub fn countifs(list: &[(FReference, FCriterion)]) -> FNumber {
-    let mut param: Vec<&dyn Any> = Vec::new();
-    for (r, c) in list {
-        param.push(r);
-        param.push(c);
+    let mut param = create_param(list.len() * 2);
+    for (i, (r, c)) in list.iter().enumerate() {
+        param[2 * i].write(r);
+        param[2 * i + 1].write(c);
     }
+    let param = unsafe { param_assume_init(param) };
+
     FNumber(func("COUNTIFS", param.as_ref()))
 }
 

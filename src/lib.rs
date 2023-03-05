@@ -1,19 +1,22 @@
 use spreadsheet_ods::{CellRange, CellRef};
 use std::borrow::Cow;
 use std::fmt::{Display, Formatter, Write};
+use std::mem::MaybeUninit;
 use std::ops::{Add, BitAnd, BitXor, Div, Mul, Neg, Sub};
+use std::{alloc, mem, slice};
 
-mod bitop;
-mod complex;
-mod database;
-mod date;
-mod extaccess;
-mod information;
-mod logical;
-mod lookup;
-mod math;
-mod matrix;
-mod rounding;
+pub mod bitop;
+pub mod complex;
+pub mod database;
+pub mod date;
+pub mod extaccess;
+pub mod information;
+pub mod logical;
+pub mod lookup;
+pub mod math;
+pub mod matrix;
+pub mod rounding;
+pub mod statistic;
 
 pub use bitop::*;
 pub use complex::*;
@@ -26,6 +29,7 @@ pub use lookup::*;
 pub use math::*;
 pub use matrix::*;
 pub use rounding::*;
+pub use statistic::*;
 
 /// The traits for this crate.
 /// And the function p() for parentheses.
@@ -417,7 +421,7 @@ pub fn formula<T: Any>(f: T) -> String {
     buf
 }
 
-#[inline]
+#[inline(never)]
 fn func0(name: &str) -> String {
     let mut buf = String::new();
     buf.push_str(name);
@@ -426,7 +430,7 @@ fn func0(name: &str) -> String {
     buf
 }
 
-#[inline]
+#[inline(never)]
 fn func1(name: &str, arg0: &dyn Any) -> String {
     let mut buf = String::new();
     buf.push_str(name);
@@ -436,7 +440,7 @@ fn func1(name: &str, arg0: &dyn Any) -> String {
     buf
 }
 
-#[inline]
+#[inline(never)]
 fn func2(name: &str, arg0: &dyn Any, arg1: &dyn Any) -> String {
     let mut buf = String::new();
     buf.push_str(name);
@@ -448,7 +452,7 @@ fn func2(name: &str, arg0: &dyn Any, arg1: &dyn Any) -> String {
     buf
 }
 
-#[inline]
+#[inline(never)]
 fn func3(name: &str, arg0: &dyn Any, arg1: &dyn Any, arg2: &dyn Any) -> String {
     let mut buf = String::new();
     buf.push_str(name);
@@ -462,7 +466,7 @@ fn func3(name: &str, arg0: &dyn Any, arg1: &dyn Any, arg2: &dyn Any) -> String {
     buf
 }
 
-#[inline]
+#[inline(never)]
 fn func4(name: &str, arg0: &dyn Any, arg1: &dyn Any, arg2: &dyn Any, arg3: &dyn Any) -> String {
     let mut buf = String::new();
     buf.push_str(name);
@@ -478,7 +482,7 @@ fn func4(name: &str, arg0: &dyn Any, arg1: &dyn Any, arg2: &dyn Any, arg3: &dyn 
     buf
 }
 
-#[inline]
+#[inline(never)]
 fn func5(
     name: &str,
     arg0: &dyn Any,
@@ -503,7 +507,31 @@ fn func5(
     buf
 }
 
+// create a array for the parameters.
+fn create_param<'a>(n: usize) -> Box<[MaybeUninit<&'a dyn Any>]> {
+    let layout = alloc::Layout::array::<MaybeUninit<&dyn Any>>(n).unwrap();
+
+    assert!(layout.size() > 0);
+
+    let sl = unsafe {
+        let ptr = std::alloc::alloc(layout) as *mut MaybeUninit<&dyn Any>;
+        if ptr.is_null() {
+            alloc::handle_alloc_error(layout);
+        }
+
+        slice::from_raw_parts(ptr, n)
+    };
+
+    Box::from(sl)
+}
+
+// assume init
 #[inline]
+unsafe fn param_assume_init(p: Box<[MaybeUninit<&dyn Any>]>) -> Box<[&dyn Any]> {
+    mem::transmute(p)
+}
+
+#[inline(never)]
 fn func(name: &str, args: &[&dyn Any]) -> String {
     let mut buf = String::new();
     buf.push_str(name);
@@ -1054,5 +1082,15 @@ macro_rules! range {
 }
 
 pub fn test0() {
-    let _ = cosh(99);
+    let _ = sumif2(
+        range!(0, 0, 99, 99),
+        (CriterionCmp::Eq, 1001),
+        range!(101, 0, 199, 99),
+    );
+}
+pub fn test1() {
+    let _ = sumifs(
+        range!(0, 0, 99, 99),
+        &[(range!(101, 0, 199, 99), (CriterionCmp::Eq, 1001))],
+    );
 }
