@@ -1,6 +1,6 @@
 use crate::{
-    func0, func1, func2, func3, func4, DateTimeParam, FLogical, FNumber, Logical, Number, Param,
-    Sequence, Text,
+    func0, func1, func2, func3, func4, DateTimeParam, FLogical, FNumber, FnNumber0, FnNumber1,
+    Logical, Number, Param, Sequence, Text,
 };
 
 /// Constructs a date from year, month, and day of month.
@@ -127,8 +127,8 @@ pub fn minute(time: impl DateTimeParam) -> FNumber {
 
 /// Extracts the month from a date.
 #[inline]
-pub fn month(date: impl DateTimeParam) -> FNumber {
-    FNumber(func1("MONTH", &date))
+pub fn month(date: impl DateTimeParam) -> FnNumber1<'static, impl DateTimeParam> {
+    FnNumber1("MONTH", date)
 }
 
 /// Returns the whole number of work days between two dates.
@@ -175,8 +175,8 @@ pub fn timevalue(text: impl Text) -> FNumber {
 
 /// Returns the serial number of today.
 #[inline]
-pub fn today() -> FNumber {
-    FNumber(func0("TODAY"))
+pub fn today() -> FnNumber0<'static> {
+    FnNumber0("TODAY")
 }
 
 /// Method for WEEKDAY()

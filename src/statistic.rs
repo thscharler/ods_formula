@@ -182,3 +182,91 @@ pub fn chisqinv(p: impl Number, degrees_of_freedom: impl Number) -> FNumber {
 pub fn legacy_chitest(a: impl Array, e: impl Array) -> FNumber {
     FNumber(func2("LEGACY.CHITEST", &a, &e))
 }
+
+/// Returns the confidence interval for a population mean.
+pub fn confidence(alpha: impl Number, stddev: impl Number, size: impl Number) -> FNumber {
+    FNumber(func3("CONFIDENCE", &alpha, &stddev, &size))
+}
+
+/// Calculates the correlation coefficient of values in N1 and N2
+pub fn correl(n1: impl Array, n2: impl Array) -> FNumber {
+    FNumber(func2("CORREL", &n1, &n2))
+}
+
+/// Calculates covariance of two cell ranges.
+pub fn covar(n1: impl Array, n2: impl Array) -> FNumber {
+    FNumber(func2("COVAR", &n1, &n2))
+}
+
+/// Returns the smallest value for which the cumulative binomial distribution is greater
+/// than or equal to a criterion value.
+pub fn critbinom(trials: impl Number, sp: impl Number, alpha: impl Number) -> FNumber {
+    FNumber(func3("CRITBINOM", &trials, &sp, &alpha))
+}
+
+/// Calculates sum of squares of deviations
+pub fn devsq(n: impl Sequence) -> FNumber {
+    FNumber(func1("DEVSQ", &n))
+}
+
+///  returns the value of the probability density function or the cumulative distribution
+/// function for the exponential distribution.
+pub fn expondist(x: impl Number, lambda: impl Number) -> FNumber {
+    FNumber(func2("EXPONDIST", &x, &lambda))
+}
+
+///  returns the value of the probability density function or the cumulative distribution
+/// function for the exponential distribution.
+pub fn expondist_cu(x: impl Number, lambda: impl Number, cumulative: impl Logical) -> FNumber {
+    FNumber(func3("EXPONDIST", &x, &lambda, &cumulative))
+}
+
+///  returns the value of the probability density function or the cumulative distribution
+/// function for the F-distribution.
+pub fn fdist(x: impl Number, r1: impl Number, r2: impl Number) -> FNumber {
+    FNumber(func3("FDIST", &x, &r1, &r2))
+}
+
+///  returns the value of the probability density function or the cumulative distribution
+/// function for the F-distribution.
+pub fn fdist_cu(
+    x: impl Number,
+    r1: impl Number,
+    r2: impl Number,
+    cumulative: impl Logical,
+) -> FNumber {
+    FNumber(func4("FDIST", &x, &r1, &r2, &cumulative))
+}
+
+/// returns the area of the right tail of the probability density function for the F-distribution.
+pub fn legacy_fdist(x: impl Number, r1: impl Number, r2: impl Number) -> FNumber {
+    FNumber(func3("LEGACY.FDIST", &x, &r1, &r2))
+}
+
+/// returns the inverse of FDIST(x;R1;R2;TRUE()).
+pub fn finv(p: impl Number, r1: impl Number, r2: impl Number) -> FNumber {
+    FNumber(func3("FINV", &p, &r1, &r2))
+}
+
+///  returns the inverse of LEGACY.FDIST(x;R1;R2)
+pub fn legacy_finv(p: impl Number, r1: impl Number, r2: impl Number) -> FNumber {
+    FNumber(func3("LEGACY.FINV", &p, &r1, &r2))
+}
+
+/// returns the Fisher transformation.
+pub fn fisher(r: impl Number) -> FNumber {
+    FNumber(func1("FISHER", &r))
+}
+
+/// returns the inverse Fisher transformation.
+pub fn fisherinv(r: impl Number) -> FNumber {
+    FNumber(func1("FISHERINV", &r))
+}
+
+/// Extrapolates future values based on existing x and y values.
+pub fn forecast(value: impl Number, data_y: impl Array, data_x: impl Array) -> FNumber {
+    FNumber(func3("FORECAST", &value, &data_y, &data_x))
+}
+
+///
+pub fn frequency(data: impl Sequence, bins: impl Sequence) -> FArray {}

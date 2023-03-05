@@ -1,11 +1,9 @@
 use crate::{
-    create_param, func, func0, func1, func2, func3, func4, param_assume_init, Any, Array,
-    Criterion, FNumber, Number, Param, Reference, Sequence,
+    create_param, func, func0, func1, func2, func3, func4, param_assume_init, Array, Criterion,
+    FNumber, Number, Param, Reference, Sequence,
 };
-use std::alloc;
 use std::borrow::Cow;
 use std::fmt::Write;
-use std::mem::MaybeUninit;
 
 /// Return the absolute (nonnegative) value.
 #[inline]

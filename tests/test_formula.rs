@@ -183,6 +183,11 @@ fn test_date() {
 }
 
 #[test]
+fn test_compose() {
+    test_ok(of::formula(of::date(1, of::month(of::today()), 2200))).q(Q);
+}
+
+#[test]
 fn test_lookup() {
     test_ok(of::formula(of::getpivotdata_fields(
         "bonk",
