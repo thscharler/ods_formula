@@ -175,5 +175,36 @@ fn test_date() {
     test_ok(of::formula(of::time(5, 5, 5))).q(Q);
     test_ok(of::formula(of::timevalue(cell!(9, 9)))).q(Q);
     test_ok(of::formula(of::today())).q(Q);
-    test_ok(of::weekday(cell!(5, 5), WeekdayMethod::Monday0)).q(Q);
+    test_ok(of::formula(of::weekday(
+        cell!(5, 5),
+        WeekdayMethod::Monday0,
+    )))
+    .q(Q);
+}
+
+#[test]
+fn test_lookup() {
+    test_ok(of::formula(of::getpivotdata_fields(
+        "bonk",
+        range!(1, 1, 10, 10),
+        &[("wang", "rang")],
+    )))
+    .q(Q);
+    test_ok(of::formula(of::lookup_map(
+        range!(1, 2, 3, 4),
+        [[9, 9, 9, 9]],
+        [[4, 4, 4, 4]],
+    )))
+    .q(Q);
+    test_ok(of::formula(of::lookup(range!(1, 2, 3, 4), [[9, 9, 9, 9]]))).q(Q);
+}
+
+#[test]
+fn test_math() {
+    test_ok(of::formula(of::sumproduct((
+        [[1, 2, 3], [4, 5, 6]],
+        range!(5, 5, 9, 9),
+        [[9, 9, 9], [10, 10, 10]],
+    ))))
+    .q(Q);
 }

@@ -1,356 +1,351 @@
 use crate::{
-    func, Any, Criterion, FCriterion, FLogical, FNumber, FReference, FText, Number, Reference,
-    Sequence, Text,
+    func, func0, func1, func2, func3, Any, Criterion, FCriterion, FLogical, FNumber, FReference,
+    FText, Number, Reference, Sequence, Text,
 };
 
 ///  Returns the number of areas in a given list of references.
 #[inline]
 pub fn areas(refs: impl Reference) -> FNumber {
-    FNumber(func("AREAS", &[&refs]))
+    FNumber(func1("AREAS", &refs))
 }
 
 /// Returns information about position, formatting or contents in a reference.
 #[inline]
 pub fn cell_col(refs: impl Reference) -> FNumber {
-    FNumber(func("CELL", &[&"COL", &refs]))
+    FNumber(func2("CELL", &"COL", &refs))
 }
 
 /// Returns information about position, formatting or contents in a reference.
 #[inline]
 pub fn cell_row(refs: impl Reference) -> FNumber {
-    FNumber(func("CELL", &[&"ROW", &refs]))
+    FNumber(func2("CELL", &"ROW", &refs))
 }
 
 /// Returns information about position, formatting or contents in a reference.
 #[inline]
 pub fn cell_sheet(refs: impl Reference) -> FText {
-    FText(func("CELL", &[&"SHEET", &refs]))
+    FText(func2("CELL", &"SHEET", &refs))
 }
 
 /// Returns information about position, formatting or contents in a reference.
 #[inline]
 pub fn cell_address(refs: impl Reference) -> FReference {
-    FReference(func("CELL", &[&"ADDRESS", &refs]))
+    FReference(func2("CELL", &"ADDRESS", &refs))
 }
 
 /// Returns information about position, formatting or contents in a reference.
 #[inline]
 pub fn cell_filename(refs: impl Reference) -> FText {
-    FText(func("CELL", &[&"FILENAME", &refs]))
+    FText(func2("CELL", &"FILENAME", &refs))
 }
 
 /// Returns information about position, formatting or contents in a reference.
 #[inline]
 pub fn cell_contents(refs: impl Reference) -> FText {
-    FText(func("CELL", &[&"CONTENTS", &refs]))
+    FText(func2("CELL", &"CONTENTS", &refs))
 }
 
 /// Returns information about position, formatting or contents in a reference.
 #[inline]
 pub fn cell_colored(refs: impl Reference) -> FLogical {
-    FLogical(func("CELL", &[&"COLOR", &refs]))
+    FLogical(func2("CELL", &"COLOR", &refs))
 }
 
 /// Returns information about position, formatting or contents in a reference.
 #[inline]
 pub fn cell_format(refs: impl Reference) -> FText {
-    FText(func("CELL", &[&"FORMAT", &refs]))
+    FText(func2("CELL", &"FORMAT", &refs))
 }
 
 /// Returns information about position, formatting or contents in a reference.
 #[inline]
 pub fn cell_type(refs: impl Reference) -> FText {
-    FText(func("CELL", &[&"TYPE", &refs]))
+    FText(func2("CELL", &"TYPE", &refs))
 }
 
 /// Returns information about position, formatting or contents in a reference.
 #[inline]
 pub fn cell_width(refs: impl Reference) -> FNumber {
-    FNumber(func("CELL", &[&"WIDTH", &refs]))
+    FNumber(func2("CELL", &"WIDTH", &refs))
 }
 
 /// Returns information about position, formatting or contents in a reference.
 #[inline]
 pub fn cell_protect(refs: impl Reference) -> FLogical {
-    FLogical(func("CELL", &[&"PROTECT", &refs]))
+    FLogical(func2("CELL", &"PROTECT", &refs))
 }
 
 /// Returns information about position, formatting or contents in a reference.
 #[inline]
 pub fn cell_parentheses(refs: impl Reference) -> FLogical {
-    FLogical(func("CELL", &[&"PARENTHESES", &refs]))
+    FLogical(func2("CELL", &"PARENTHESES", &refs))
 }
 
 /// Returns information about position, formatting or contents in a reference.
 #[inline]
 pub fn cell_prefix(refs: impl Reference) -> FText {
-    FText(func("CELL", &[&"PREFIX", &refs]))
+    FText(func2("CELL", &"PREFIX", &refs))
 }
 
 /// Returns the column number(s) of a reference
 #[inline]
 pub fn column(refs: impl Reference) -> FNumber {
-    FNumber(func("COLUMN", &[&refs]))
+    FNumber(func1("COLUMN", &refs))
 }
 
 /// Returns the number of columns in a given range.
 #[inline]
 pub fn columns(refs: impl Reference) -> FNumber {
-    FNumber(func("COLUMNS", &[&refs]))
+    FNumber(func1("COLUMNS", &refs))
 }
 
 /// Count the number of Numbers provided
 #[inline]
 pub fn count(seq: impl Sequence) -> FNumber {
-    FNumber(func("COUNT", &[&seq]))
+    FNumber(func1("COUNT", &seq))
 }
 
 /// Count the number of non-empty values.
 #[inline]
 pub fn counta(seq: impl Sequence) -> FNumber {
-    FNumber(func("COUNTA", &[&seq]))
+    FNumber(func1("COUNTA", &seq))
 }
 
 /// Count the number of blank cells
 #[inline]
 pub fn countblank(seq: impl Sequence) -> FNumber {
-    FNumber(func("COUNTBLANK", &[&seq]))
+    FNumber(func1("COUNTBLANK", &seq))
 }
 
 /// Count the number of cells in a range that meet a criteria.
 #[inline]
 pub fn countif(seq: impl Sequence, criterion: impl Criterion) -> FNumber {
-    FNumber(func("COUNTBLANK", &[&seq, &criterion]))
+    FNumber(func2("COUNTBLANK", &seq, &criterion))
 }
 
 /// Count the number of cells that meet multiple criteria in multiple ranges.
 #[inline]
 pub fn countifs(list: &[(FReference, FCriterion)]) -> FNumber {
-    let mut buf = String::new();
-    buf.push_str("COUNTIFS");
-    buf.push('(');
-    for (i, (r, c)) in list.iter().enumerate() {
-        if i > 0 {
-            buf.push(';');
-        }
-        r.formula(&mut buf);
-        buf.push(';');
-        c.formula(&mut buf);
+    let mut param: Vec<&dyn Any> = Vec::new();
+    for (r, c) in list {
+        param.push(r);
+        param.push(c);
     }
-    buf.push(')');
-    FNumber(buf)
+    FNumber(func("COUNTIFS", param.as_ref()))
 }
 
 /// Returns Number representing the specific Error type
 #[inline]
 pub fn error_type(error: impl Any) -> FNumber {
-    FNumber(func("ERROR.TYPE", &[&error]))
+    FNumber(func1("ERROR.TYPE", &error))
 }
 
 ///  Returns formula at given reference as text.
 #[inline]
 pub fn cell_formula(refs: impl Reference) -> FText {
-    FText(func("FORMULA", &[&refs]))
+    FText(func1("FORMULA", &refs))
 }
 
 /// Returns information about the environment
 #[inline]
 pub fn info_directory() -> FText {
-    FText(func("INFO", &[&"directory"]))
+    FText(func1("INFO", &"directory"))
 }
 
 /// Returns information about the environment
 #[inline]
 pub fn info_memavail() -> FNumber {
-    FNumber(func("INFO", &[&"memavail"]))
+    FNumber(func1("INFO", &"memavail"))
 }
 
 /// Returns information about the environment
 #[inline]
 pub fn info_memused() -> FNumber {
-    FNumber(func("INFO", &[&"memused"]))
+    FNumber(func1("INFO", &"memused"))
 }
 
 /// Returns information about the environment
 #[inline]
 pub fn info_numfile() -> FNumber {
-    FNumber(func("INFO", &[&"numfile"]))
+    FNumber(func1("INFO", &"numfile"))
 }
 
 /// Returns information about the environment
 #[inline]
 pub fn info_osversion() -> FText {
-    FText(func("INFO", &[&"osversion"]))
+    FText(func1("INFO", &"osversion"))
 }
 
 /// Returns information about the environment
 #[inline]
 pub fn info_origin() -> FText {
-    FText(func("INFO", &[&"origin"]))
+    FText(func1("INFO", &"origin"))
 }
 
 /// Returns information about the environment
 #[inline]
 pub fn info_recal() -> FText {
-    FText(func("INFO", &[&"recalc"]))
+    FText(func1("INFO", &"recalc"))
 }
 
 /// Returns information about the environment
 #[inline]
 pub fn info_release() -> FText {
-    FText(func("INFO", &[&"release"]))
+    FText(func1("INFO", &"release"))
 }
 
 /// Returns information about the environment
 #[inline]
 pub fn info_system() -> FText {
-    FText(func("INFO", &[&"system"]))
+    FText(func1("INFO", &"system"))
 }
 
 /// Returns information about the environment
 #[inline]
 pub fn info_totmem() -> FNumber {
-    FNumber(func("INFO", &[&"totmem"]))
+    FNumber(func1("INFO", &"totmem"))
 }
 
 /// Return TRUE if the referenced cell is blank, else return FALSE
 #[inline]
 pub fn isblank(x: impl Any) -> FLogical {
-    FLogical(func("ISBLANK", &[&x]))
+    FLogical(func1("ISBLANK", &x))
 }
 
 /// Return TRUE if the parameter has type Error and is not #N/A, else return FALSE.
 #[inline]
 pub fn iserr(x: impl Any) -> FLogical {
-    FLogical(func("ISERR", &[&x]))
+    FLogical(func1("ISERR", &x))
 }
 
 /// Return TRUE if the parameter has type Error, else return FALSE.
 #[inline]
 pub fn iserror(x: impl Any) -> FLogical {
-    FLogical(func("ISERROR", &[&x]))
+    FLogical(func1("ISERROR", &x))
 }
 
 /// Return TRUE if the value is even, else return FALSE
 #[inline]
 pub fn iseven(number: impl Number) -> FLogical {
-    FLogical(func("ISEVEN", &[&number]))
+    FLogical(func1("ISEVEN", &number))
 }
 
 /// Return TRUE if the reference refers to a formula, else return FALSE.
 #[inline]
 pub fn isformula(refs: impl Reference) -> FLogical {
-    FLogical(func("ISFORMULA", &[&refs]))
+    FLogical(func1("ISFORMULA", &refs))
 }
 
 /// Return TRUE if the parameter has type Logical, else return FALSE
 #[inline]
 pub fn islogical(x: impl Any) -> FLogical {
-    FLogical(func("ISLOGICAL", &[&x]))
+    FLogical(func1("ISLOGICAL", &x))
 }
 
 /// Return TRUE if the parameter has type Error and is #N/A, else return FALSE.
 #[inline]
 pub fn isna(x: impl Any) -> FLogical {
-    FLogical(func("ISNA", &[&x]))
+    FLogical(func1("ISNA", &x))
 }
 
 ///  Return TRUE if the parameter does not have type Text, else return FALSE.
 #[inline]
 pub fn isnontext(x: impl Any) -> FLogical {
-    FLogical(func("ISNONTEXT", &[&x]))
+    FLogical(func1("ISNONTEXT", &x))
 }
 
 ///  Return TRUE if the parameter has type Number, else return FALSE
 #[inline]
 pub fn isnumber(x: impl Any) -> FLogical {
-    FLogical(func("ISNUMBER", &[&x]))
+    FLogical(func1("ISNUMBER", &x))
 }
 
 /// Return TRUE if the value is even, else return FALSE.
 #[inline]
 pub fn isodd(x: impl Any) -> FLogical {
-    FLogical(func("ISODD", &[&x]))
+    FLogical(func1("ISODD", &x))
 }
 
 /// Return TRUE if the parameter is of type reference, else return FALSE.
 #[inline]
 pub fn isref(x: impl Any) -> FLogical {
-    FLogical(func("ISREF", &[&x]))
+    FLogical(func1("ISREF", &x))
 }
 
 /// Return TRUE if the parameter has type Text, else return FALSE.
 #[inline]
 pub fn istext(x: impl Any) -> FLogical {
-    FLogical(func("ISTEXT", &[&x]))
+    FLogical(func1("ISTEXT", &x))
 }
 
 /// Return the number of a value.
 #[inline]
 pub fn n(x: impl Any) -> FLogical {
-    FLogical(func("N", &[&x]))
+    FLogical(func1("N", &x))
 }
 
 /// Return the constant Error value #N/A.
 #[inline]
 pub fn na() -> FLogical {
-    FLogical(func("NA", &[]))
+    FLogical(func0("NA"))
 }
 
 /// Convert text to number, in a locale-independent way.
 #[inline]
-pub fn numbervalue(
-    text: impl Text,
-    dec_sep: Option<impl Text>,
-    group_sep: Option<impl Text>,
-) -> FNumber {
-    if let Some(dec_sep) = dec_sep {
-        if let Some(group_sep) = group_sep {
-            FNumber(func("NUMBERVALUE", &[&text, &dec_sep, &group_sep]))
-        } else {
-            FNumber(func("NUMBERVALUE", &[&text, &dec_sep]))
-        }
-    } else {
-        if let Some(group_sep) = group_sep {
-            FNumber(func("NUMBERVALUE", &[&text, &(), &group_sep]))
-        } else {
-            FNumber(func("NUMBERVALUE", &[&text]))
-        }
-    }
+pub fn numbervalue(text: impl Text) -> FNumber {
+    FNumber(func1("NUMBERVALUE", &text))
+}
+
+/// Convert text to number, in a locale-independent way.
+#[inline]
+pub fn numbervalue_dec(text: impl Text, dec_sep: impl Text) -> FNumber {
+    FNumber(func2("NUMBERVALUE", &text, &dec_sep))
+}
+
+/// Convert text to number, in a locale-independent way.
+#[inline]
+pub fn numbervalue_grp(text: impl Text, group_sep: impl Text) -> FNumber {
+    FNumber(func3("NUMBERVALUE", &text, &(), &group_sep))
+}
+
+/// Convert text to number, in a locale-independent way.
+#[inline]
+pub fn numbervalue_sep(text: impl Text, dec_sep: impl Text, group_sep: impl Text) -> FNumber {
+    FNumber(func3("NUMBERVALUE", &text, &dec_sep, &group_sep))
 }
 
 /// Returns the row number(s) of a reference.
 #[inline]
 pub fn row(refs: impl Reference) -> FNumber {
-    FNumber(func("ROW", &[&refs]))
+    FNumber(func1("ROW", &refs))
 }
 
 ///  Returns the number of rows in a given range.
 #[inline]
 pub fn rows(refs: impl Reference) -> FNumber {
-    FNumber(func("ROWS", &[&refs]))
+    FNumber(func1("ROWS", &refs))
 }
 
 /// Returns the sheet number of the reference or the string representing a sheet name.
 #[inline]
 pub fn sheet(refs: impl Reference) -> FNumber {
-    FNumber(func("SHEET", &[&refs]))
+    FNumber(func1("SHEET", &refs))
 }
 
 /// Returns the number of sheets in a reference or current document.
 #[inline]
 pub fn sheets(refs: impl Reference) -> FNumber {
-    FNumber(func("SHEETS", &[&refs]))
+    FNumber(func1("SHEETS", &refs))
 }
 
 /// Returns a number indicating the type of the provided value.
 #[inline]
 pub fn value_type(a: impl Any) -> FNumber {
-    FNumber(func("TYPE", &[&a]))
+    FNumber(func1("TYPE", &a))
 }
 
 /// Convert text to number
 #[inline]
 pub fn value(text: impl Text) -> FNumber {
-    FNumber(func("VALUE", &[&text]))
+    FNumber(func1("VALUE", &text))
 }

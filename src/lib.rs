@@ -1,4 +1,5 @@
 use spreadsheet_ods::{CellRange, CellRef};
+use std::borrow::Cow;
 use std::fmt::{Display, Formatter, Write};
 use std::ops::{Add, BitAnd, BitXor, Div, Mul, Neg, Sub};
 
@@ -12,8 +13,9 @@ mod logical;
 mod lookup;
 mod math;
 mod matrix;
+mod rounding;
 
-pub use bitop::bitand;
+pub use bitop::*;
 pub use complex::*;
 pub use database::*;
 pub use date::*;
@@ -23,6 +25,7 @@ pub use logical::*;
 pub use lookup::*;
 pub use math::*;
 pub use matrix::*;
+pub use rounding::*;
 
 /// The traits for this crate.
 /// And the function p() for parentheses.
@@ -126,6 +129,14 @@ pub trait ReferenceOp<T> {
     fn intersect<U: Reference>(&self, other: U) -> FReference;
     /// concatenation of references
     fn refcat<U: Reference>(&self, other: U) -> FReference;
+}
+
+trait Param {
+    type ParamType<'a>
+    where
+        Self: 'a;
+
+    fn as_param(&self) -> Self::ParamType<'_>;
 }
 
 // -----------------------------------------------------------------------
@@ -407,6 +418,92 @@ pub fn formula<T: Any>(f: T) -> String {
 }
 
 #[inline]
+fn func0(name: &str) -> String {
+    let mut buf = String::new();
+    buf.push_str(name);
+    buf.push('(');
+    buf.push(')');
+    buf
+}
+
+#[inline]
+fn func1(name: &str, arg0: &dyn Any) -> String {
+    let mut buf = String::new();
+    buf.push_str(name);
+    buf.push('(');
+    arg0.formula(&mut buf);
+    buf.push(')');
+    buf
+}
+
+#[inline]
+fn func2(name: &str, arg0: &dyn Any, arg1: &dyn Any) -> String {
+    let mut buf = String::new();
+    buf.push_str(name);
+    buf.push('(');
+    arg0.formula(&mut buf);
+    buf.push(';');
+    arg1.formula(&mut buf);
+    buf.push(')');
+    buf
+}
+
+#[inline]
+fn func3(name: &str, arg0: &dyn Any, arg1: &dyn Any, arg2: &dyn Any) -> String {
+    let mut buf = String::new();
+    buf.push_str(name);
+    buf.push('(');
+    arg0.formula(&mut buf);
+    buf.push(';');
+    arg1.formula(&mut buf);
+    buf.push(';');
+    arg2.formula(&mut buf);
+    buf.push(')');
+    buf
+}
+
+#[inline]
+fn func4(name: &str, arg0: &dyn Any, arg1: &dyn Any, arg2: &dyn Any, arg3: &dyn Any) -> String {
+    let mut buf = String::new();
+    buf.push_str(name);
+    buf.push('(');
+    arg0.formula(&mut buf);
+    buf.push(';');
+    arg1.formula(&mut buf);
+    buf.push(';');
+    arg2.formula(&mut buf);
+    buf.push(';');
+    arg3.formula(&mut buf);
+    buf.push(')');
+    buf
+}
+
+#[inline]
+fn func5(
+    name: &str,
+    arg0: &dyn Any,
+    arg1: &dyn Any,
+    arg2: &dyn Any,
+    arg3: &dyn Any,
+    arg4: &dyn Any,
+) -> String {
+    let mut buf = String::new();
+    buf.push_str(name);
+    buf.push('(');
+    arg0.formula(&mut buf);
+    buf.push(';');
+    arg1.formula(&mut buf);
+    buf.push(';');
+    arg2.formula(&mut buf);
+    buf.push(';');
+    arg3.formula(&mut buf);
+    buf.push(';');
+    arg4.formula(&mut buf);
+    buf.push(')');
+    buf
+}
+
+#[inline]
 fn func(name: &str, args: &[&dyn Any]) -> String {
     let mut buf = String::new();
     buf.push_str(name);
@@ -650,6 +747,32 @@ impl Field for &str {}
 impl Scalar for &str {}
 impl DateTimeParam for &str {}
 
+impl<'a> Any for Cow<'a, str> {
+    fn formula(&self, buf: &mut String) {
+        let str = self.as_ref();
+        if str.contains('"') {
+            buf.push('"');
+            for (i, s) in str.split('"').enumerate() {
+                if i > 0 {
+                    buf.push_str("\"\"");
+                }
+                buf.push_str(s);
+            }
+            buf.push('"');
+        } else {
+            buf.push('"');
+            buf.push_str(str);
+            buf.push('"');
+        }
+    }
+}
+impl<'a> Text for Cow<'a, str> {}
+impl<'a> Sequence for Cow<'a, str> {}
+impl<'a> TextOrNumber for Cow<'a, str> {}
+impl<'a> Field for Cow<'a, str> {}
+impl<'a> Scalar for Cow<'a, str> {}
+impl<'a> DateTimeParam for Cow<'a, str> {}
+
 impl Any for String {
     fn formula(&self, buf: &mut String) {
         if self.contains('"') {
@@ -688,6 +811,7 @@ impl Sequence for CellRef {}
 impl TextOrNumber for CellRef {}
 impl Field for CellRef {}
 impl Scalar for CellRef {}
+impl Matrix for CellRef {}
 impl DateTimeParam for CellRef {}
 
 impl Any for CellRange {
@@ -703,6 +827,7 @@ impl Sequence for CellRange {}
 impl TextOrNumber for CellRange {}
 impl Field for CellRange {}
 impl Scalar for CellRange {}
+impl Matrix for CellRange {}
 impl DateTimeParam for CellRange {}
 
 // -----------------------------------------------------------------------
